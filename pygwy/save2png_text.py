@@ -2,14 +2,9 @@ import gwy
 import re
 import os
 import sys
-#sys.path.insert(0, '/usr/share/gwyddion/pygwy/')
-#import gwyutils
-from PIL import ImageFont
-from PIL import Image
-from PIL import ImageDraw
-
+import matplotlib.pyplot as plt
+import matplotlib as mlp
 import numpy as np
-#from skimage import io, exposure, img_as_uint, img_as_float
 
 plugin_menu = "/Basic Operations/Save2pngText"
 plugin_type = "PROCESS"
@@ -66,15 +61,24 @@ def run():
     amax = array.max()
     rng = amax - amin
     array2 = high - (((high - low) * (amax - array)) / rng)
-    #array2 =  array2.astype('uint8')
-    #array2 = exposure.rescale_intensity(array, out_range='uint8')
-    #array2 = np.transpose(array2)
-    new = np.zeros((w+40,h))
+    new = np.zeros((w+25,h))
     new[:,:] = 255
     new[:w,:h] = array2
     new = new.astype('uint8')
-    img = Image.fromarray(new)
-# determine the channel
+    # load colormap
+    palette_name = '/' + str(data_field_id) + '/base/palette'
+    cm = 'gray' 
+    if c.contains_by_name(palette_name):
+        palette = c[palette_name]
+        if palette == "Julio":
+            fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
+            cm = mlp.colors.ListedColormap(fire/255)
+    #    else:
+    #        cm = 'gray'
+    #else:    
+    #    cm = 'gray'
+    img = plt.imshow(new, cmap = cm)
+    # determine the channel
     ch_out = None
     fb_ward = None
     match_df = re.search(r'Frequency_Shift ',channel)
@@ -93,10 +97,8 @@ def run():
         fb_ward = 'F'
     if match_backward:
         fb_ward = 'B'
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf",30)
-    output_text = basename+': '+str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)+'_'+str(h)
-    draw.text((0, w),output_text,font=font,fill=0)
+    output_text = basename+'.sxm'+': '+str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)+'_'+str(h)
+    plt.text(5, w+13,output_text,fontsize=8)
     output_path = os.path.join(dir_path,'temp')
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
@@ -107,5 +109,6 @@ def run():
         count = count + 1
         output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
     output = os.path.join(output_path,output_name)
-    img.save(output)
-#io.imsave(basename+'test_16bit.png', np.transpose(-array2))
+    plt.axis('off')
+    plt.savefig(output,cmap=cm)
+    plt.close()
