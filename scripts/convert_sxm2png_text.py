@@ -9,16 +9,19 @@ import numpy as np
 def save2png_text(data_path, log = 0):
 # get the current container and datafield
     c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
+    
     #c = gwy.gwy_app_file_load(data_path)
     #print c.keys_by_name()
     data_field_id = 0
     data_field = '/' + str(data_field_id) + '/data'
     d = c[data_field]
+    #gwy.gwy_process_func_run("facet-level", c, gwy.RUN_IMMEDIATE)
     #filename = c['/filename']
     dir_path,basename = os.path.split(data_path)
     #dir_path = data_path
     #print data_path
     #basename = basename[0:-4]
+
     meta_field = '/' + str(data_field_id) + '/meta'
     title = '/' + str(data_field_id) + '/data/title'
     channel = c[title]
@@ -39,14 +42,28 @@ def save2png_text(data_path, log = 0):
 # prepare to save
     w = d.get_xres()
     h = d.get_yres()
-    #io.use_plugin('freeimage')
+    ############## DATA PROCESSING #################
+    old_plane = d.fit_plane()
+    #print type(old_plane)
+    tmp = old_plane[0]
+    bx = old_plane[1]
+    by = old_plane[2]
+    tmp = -0.5*(bx*float(w)+ by*float(h));
+    d.plane_level(tmp,bx,by)
+    #d.data_changed()
+    
+    ############# DATA PROCESSING END ##############
     data_field = '/' + str(data_field_id) + '/data'
     #array = gwyutils.data_field_data_as_array(d)
     #d.data_changed()
+    
     array = np.array(d.get_data()).reshape(w,h)
     #array = np.transpose(array)
     # set the rescaling
     b_name = '/' + str(data_field_id) + '/base/'
+    range_type = '/' + str(data_field_id) + '/range-type'
+    c.set_string_by_name(range_type,'2')
+    
     b_min = b_name + 'min'
     b_max = b_name + 'max'
     if c.contains_by_name(b_min) and c.contains_by_name(b_max):
@@ -69,15 +86,13 @@ def save2png_text(data_path, log = 0):
     # load colormap
     palette_name = '/' + str(data_field_id) + '/base/palette'
     cm = 'gray' 
-    if c.contains_by_name(palette_name):
-        palette = c[palette_name]
-        if palette == "Julio":
-            fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
-            cm = mlp.colors.ListedColormap(fire/255)
-    #    else:
-    #        cm = 'gray'
-    #else:    
-    #    cm = 'gray'
+    #if c.contains_by_name(palette_name):
+        #palette = c[palette_name]
+        #if palette == "Julio":
+            #fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
+            #cm = mlp.colors.ListedColormap(fire/255)
+    fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
+    cm = mlp.colors.ListedColormap(fire/255)
     img = plt.imshow(new, cmap = cm)
     # determine the channel
     ch_out = None
@@ -106,9 +121,9 @@ def save2png_text(data_path, log = 0):
 
     count = 1
     output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
-    while os.path.exists(os.path.join(output_path,output_name)):
-        count = count + 1
-        output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
+    #while os.path.exists(os.path.join(output_path,output_name)):
+    #    count = count + 1
+    #    output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
     output = os.path.join(output_path,output_name)
     plt.axis('off')
     plt.savefig(output,cmap=cm)
