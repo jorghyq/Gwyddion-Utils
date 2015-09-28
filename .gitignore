@@ -5,3 +5,6 @@
 *.txt[cod]
 .ipynb_checkpoints
 test
+*~
+~.swp
+~.swo
