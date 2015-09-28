@@ -1,6 +1,7 @@
-# *.pyc
+ *.pyc
 # *.png
-#*.py[cod]
+*.py[cod]
 *.sxm
+*.txt[cod]
 .ipynb_checkpoints
 test
