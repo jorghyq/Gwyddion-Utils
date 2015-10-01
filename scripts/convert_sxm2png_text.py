@@ -43,13 +43,13 @@ def save2png_text(data_path, log = 0):
     w = d.get_xres()
     h = d.get_yres()
     ############## DATA PROCESSING #################
-    old_plane = d.fit_plane()
+    #old_plane = d.fit_plane()
     #print type(old_plane)
-    tmp = old_plane[0]
-    bx = old_plane[1]
-    by = old_plane[2]
-    tmp = -0.5*(bx*float(w)+ by*float(h));
-    d.plane_level(tmp,bx,by)
+    #tmp = old_plane[0]
+    #bx = old_plane[1]
+    #by = old_plane[2]
+    #tmp = -0.5*(bx*float(w)+ by*float(h));
+    #d.plane_level(tmp,bx,by)
     #d.data_changed()
     
     ############# DATA PROCESSING END ##############
@@ -58,6 +58,20 @@ def save2png_text(data_path, log = 0):
     #d.data_changed()
     
     array = np.array(d.get_data()).reshape(w,h)
+    ############## DATA PROCESSING #################
+    data_temp = array.T
+    n = w
+    xi = np.arange(n)
+    #print xi
+    x= np.array([xi,np.ones(n)])
+    w_temp = np.linalg.lstsq(x.T,data_temp)[0]
+    data_sub = np.zeros([n,n])
+    X = np.array([xi,]*int(n)).T
+    Y = (X*w_temp[0]+w_temp[1]).T
+    array = array - Y
+    #print array.shape
+    ############# DATA PROCESSING END ##############
+    
     #array = np.transpose(array)
     # set the rescaling
     b_name = '/' + str(data_field_id) + '/base/'
@@ -115,7 +129,7 @@ def save2png_text(data_path, log = 0):
         fb_ward = 'B'
     output_text = basename+': '+str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)+'_'+str(h)
     plt.text(5, w+10,output_text,fontsize=8)
-    output_path = os.path.join(dir_path,'temp')
+    output_path = os.path.join(dir_path,'overview')
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
 
