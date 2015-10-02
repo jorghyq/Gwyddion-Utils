@@ -52,21 +52,39 @@ class ImageBrowser:
 	self.hbox_channels = gtk.HBox(False, 0)
 	self.hbox_directions = gtk.HBox(False, 0)
 	self.hbox_types = gtk.HBox(False, 0)
+	self.hbox_scale_min = gtk.HBox(False, 0)
+	self.hbox_scale_max = gtk.HBox(False, 0)
 	self.label_w = gtk.Label("W: ")
 	self.label_h = gtk.Label("H: ")
 	self.label_types =gtk.Label("Type: ")
 	self.combobox_types =gtk.combo_box_new_text()
+	self.label_scale_min = gtk.Label("Min: ")
+	self.label_scale_max = gtk.Label("Max: ")
 	types = ["Unknown","Metal","Molecules","Useless"]
 	for item in types:
 	    self.combobox_types.append_text(item)
 	    self.combobox_types.set_active(0)
 	self.button_open = gtk.Button("Open")
+	self.adjustment_scale_min = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 1.0, 1.0)
+	self.adjustment_scale_max = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 1.0, 1.0)
+	self.scale_min = gtk.HScale(self.adjustment_scale_min)
+	#self.scale_min.set_update_policy(gtk.UPDATE_CONTINUOUS)
+	self.scale_min.set_digits(0)
+	#self.scale_min.set_value_pos(gtk.POS_TOP)
+	self.scale_min.set_draw_value(True)
+	self.scale_max = gtk.HScale(self.adjustment_scale_max)
+	self.scale_max.set_digits(0)
+	#self.scale_max.set_update_policy(gtk.UPDATE_CONTINUOUS)
 	self.hbox_channels.pack_start(self.label_channels,expand=False,fill=True,padding=0)
 	self.hbox_channels.pack_start(self.combobox_channels,expand=False,fill=True,padding=0)
 	self.hbox_directions.pack_start(self.label_directions,expand=False,fill=True,padding=0)
 	self.hbox_directions.pack_start(self.combobox_directions,expand=False,fill=True,padding=0)
 	self.hbox_types.pack_start(self.label_types,expand=False,fill=True,padding=0)
 	self.hbox_types.pack_start(self.combobox_types,expand=False,fill=True,padding=0)
+	self.hbox_scale_min.pack_start(self.label_scale_min,expand=False,fill=True,padding=0)
+	self.hbox_scale_min.pack_end(self.scale_min,expand=True,fill=True,padding=0)
+	self.hbox_scale_max.pack_start(self.label_scale_max,expand=False,fill=True,padding=0)
+	self.hbox_scale_max.pack_end(self.scale_max,expand=True,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_channels, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_directions, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.label_volt, expand=False,fill=True,padding=0)
@@ -75,6 +93,8 @@ class ImageBrowser:
 	self.vbox_ops.pack_start(self.label_h, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_types, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.button_open, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.hbox_scale_min, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.hbox_scale_max, expand=False,fill=True,padding=0)
 	self.combobox_channels.show()
 	self.combobox_directions.show()
 	self.combobox_types.show()
@@ -89,12 +109,20 @@ class ImageBrowser:
 	self.label_w.show()
 	self.label_h.show()
 	self.button_open.show()
+	self.scale_min.show()
+	self.scale_max.show()
+	self.label_scale_min.show()
+	self.label_scale_max.show()
+	self.hbox_scale_min.show()
+	self.hbox_scale_max.show()
 	################################ handling signals
 	self.button_load.connect("clicked",self.select_path,None)
 	self.combobox_files.connect('changed', self.update_all, None)
 	self.combobox_channels.connect('changed', self.update_image, None)
 	self.combobox_directions.connect('changed', self.update_image, None)
 	self.button_open.connect('clicked', self.open_file, None)
+	self.scale_min.connect('value_changed',self.update_image,None)
+	self.scale_max.connect('value_changed',self.update_image,None)
 	################################ Arrangement and show
 	self.window.add(self.vbox_main)
 	self.vbox_main.pack_start(self.hbox_files,expand=False,fill=True,padding=0)
@@ -166,6 +194,8 @@ class ImageBrowser:
 	    self.combobox_channels.set_model(model)
 	    self.combobox_channels.set_active(self.channel_id)
 	    self.update_image(widget,None)
+	    self.adjustment_scale_min.set_value(0)
+	    self.adjustment_scale_max.set_value(100)
 	    # change the combobox_channels
 	    
     def update_image(self, widget, data):
@@ -177,10 +207,14 @@ class ImageBrowser:
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
 	    self.gradient_key = 'Julio'	    
-	#else:
-	 #   self.gradient_key = self.data_id_str+"base/palette"
+	elif re.search(r'Frequency', self.channel_str):
+	    self.gradient_key = 'Gray'
 	self.local_c.set_string_by_name(self.data_id_str+"base/palette", self.gradient_key)
-	#layer.set_gradient_key(self.data_id_str+"base/palette")
+	self.local_c.set_int32_by_name(self.data_id_str+"base/range-type", 1)#gwy.LAYER_BASIC_RANGE_FIXED
+	self.local_c.set_double_by_name(self.data_id_str+"base/min", float(self.data_min + self.scale_min_current/100*self.data_dif))
+	self.local_c.set_double_by_name(self.data_id_str+"base/max", float(self.data_min + self.scale_max_current/100*self.data_dif))
+	print self.local_c[self.data_id_str+"base/min"],self.data_id_str+"base/min"
+	#print self.data_min + self.scale_min_current/100*self.data_dif,self.data_min + self.scale_max_current/100*self.data_dif
 	layer.set_gradient_key(self.data_id_str+"base/palette")
 	layer.set_range_type_key(self.data_id_str+"base")
 	layer.set_min_max_key(self.data_id_str+"base")
@@ -213,13 +247,6 @@ class ImageBrowser:
 	for item in c_keys:
 	    if re.search(r'title',item):
 		count = count + 1
-		#match = re.search(r'\d',item)
-		#if match:
-		    #temp_id = match.group()
-		    #title_field = '/' + str(temp_id) + '/data/title'
-		    #temp_title = self.c[title_field]
-		    #temp_channel, temp_directions = temp_title.split(' ')
-		    #print temp_id
 	#print count
 	self.channel_id = 0
 	model = self.combobox_files.get_model()
@@ -243,7 +270,18 @@ class ImageBrowser:
 	#print self.channel_id,self.direction_id, data_id
 	self.data_id_str = '/'+str(data_id)+'/'
 	self.d = self.c[self.data_id_str + 'data']
-	#print self.data_id_str
+	data = self.d.get_data()
+	self.data_min = np.array(data).min()
+	#self.coef_min = 100.0/self.data_min
+	self.data_max = np.array(data).max()
+	#self.coef_min = 100.0/self.data_max
+	self. data_dif = self.data_max - self.data_min
+	self.scale_min_current = self.scale_min.get_value()
+	self.scale_max_current = self.scale_max.get_value()
+	#print self.scale_min_current,self.scale_max_current
+    
+    #def change_constrast(self, widget, data)
+	
 	
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
