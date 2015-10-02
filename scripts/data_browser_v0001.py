@@ -20,7 +20,6 @@ new_container.set_object_by_name("/0/data", data)
 
 
 view = gwy.DataView(new_container)
-# May not be necessary here but always better to do.
 view.set_data_prefix("/0/data")
 
 layer = gwy.LayerBasic()
@@ -30,7 +29,6 @@ layer.set_range_type_key("/0/base")
 layer.set_min_max_key("/0/base")
 
 view.set_base_layer(layer)
-view_window = gwy.DataWindow(view)
 vbox = gtk.VBox(False,spacing=0)
 button = gtk.Button("hi")
 vbox.pack_start(button,expand=False)
