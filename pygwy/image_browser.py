@@ -1,13 +1,17 @@
-#!/usr/bin/env python
-# Image Browser for Gwyddion
-
+import gwy
+import re
+import os
+import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gwy
-import os
+import matplotlib.pyplot as plt
+import matplotlib as mlp
 import numpy as np
-import re
+
+plugin_menu = "/Basic Operations/Image Browser"
+plugin_type = "PROCESS"
+plugin_desc = "image_browser"
 
 class ImageBrowser:
     def __init__(self):
@@ -149,7 +153,7 @@ class ImageBrowser:
 	if active < 0:
 	    pass
 	else:
-	    #print  active
+	    #print "changed"
 	    self.current_data = self.select_path +'/'+ model[active][0]
 	    # change the image and change the image settings
 	    self.load_new_data(self.current_data)
@@ -174,13 +178,6 @@ class ImageBrowser:
 	self.view.set_data_prefix(self.data_id_str+"data")
 	layer = gwy.LayerBasic()
 	layer.set_data_key(self.data_id_str+"data")
-	if re.search(r'Z', self.channel_str):
-	    #print self.channel_str
-	    self.gradient_key = 'Julio'	    
-	#else:
-	 #   self.gradient_key = self.data_id_str+"base/palette"
-	self.local_c.set_string_by_name(self.data_id_str+"base/palette", self.gradient_key)
-	#layer.set_gradient_key(self.data_id_str+"base/palette")
 	layer.set_gradient_key(self.data_id_str+"base/palette")
 	layer.set_range_type_key(self.data_id_str+"base")
 	layer.set_min_max_key(self.data_id_str+"base")
@@ -222,8 +219,6 @@ class ImageBrowser:
 		    #print temp_id
 	#print count
 	self.channel_id = 0
-	model = self.combobox_files.get_model()
-	self.channel_str = model[self.channel_id][0]
 	self.direction_id = 0
 	for i in range(0,count,2):
 	    title = '/' + str(i) + '/data/title'
@@ -235,9 +230,6 @@ class ImageBrowser:
     
     def load_data(self):
 	self.channel_id = self.combobox_channels.get_active()
-	model = self.combobox_channels.get_model()
-	self.channel_str = model[self.channel_id][0]
-	#print self.channel_str
 	self.direction_id = self.combobox_directions.get_active()
 	data_id = self.channel_id * 2 + self.direction_id
 	#print self.channel_id,self.direction_id, data_id
@@ -247,13 +239,17 @@ class ImageBrowser:
 	
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
+	self.combobox_files.grab_focus()
 	
-	
-	
-def main():
-    gtk.main()
-    return 0
-	
-if __name__ == "__main__":
+def run():
     ImageBrowser()
-    main()
+    gtk.main()
+    return 0	
+	
+#def main():
+#    gtk.main()
+#    return 0
+	
+#if __name__ == "__main__":
+#    ImageBrowser()
+#    main()
