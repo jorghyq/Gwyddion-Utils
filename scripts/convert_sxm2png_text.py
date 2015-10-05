@@ -93,7 +93,7 @@ def save2png_text(data_path, log = 0):
     amax = array.max()
     rng = amax - amin
     array2 = high - (((high - low) * (amax - array)) / rng)
-    new = np.zeros((w+25,h))
+    new = np.zeros((w+50,h))
     new[:,:] = 255
     new[:w,:h] = array2
     new = new.astype('uint8')
@@ -127,8 +127,9 @@ def save2png_text(data_path, log = 0):
         fb_ward = 'F'
     if match_backward:
         fb_ward = 'B'
-    output_text = basename+': '+str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)+'_'+str(h)
-    plt.text(5, w+10,output_text,fontsize=8)
+    output_text = str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)
+    plt.text(5, w+25,basename,fontsize=16)
+    plt.text(5, w+50,output_text,fontsize=16)
     output_path = os.path.join(dir_path,'overview')
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
@@ -140,7 +141,10 @@ def save2png_text(data_path, log = 0):
     #    output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
     output = os.path.join(output_path,output_name)
     plt.axis('off')
-    plt.savefig(output,cmap=cm)
+    plt.xticks([])
+    plt.yticks([])
+    #plt.imsave(output,new,cmap=cm)
+    plt.savefig(output,cmap=cm,bbox_inches='tight', pad_inches=0,dpi=100)
     plt.close()
 
 if __name__ == '__main__':

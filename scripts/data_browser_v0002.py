@@ -9,6 +9,10 @@ import os
 import numpy as np
 import re
 
+def sorted_ls(path):
+    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+    return list(sorted(os.listdir(path), key=mtime))
+
 class ImageBrowser:
     def __init__(self):
 	########### Initialize some variables ##############
@@ -158,7 +162,9 @@ class ImageBrowser:
 	dialog.destroy()
     
     def update_files(self):
-	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
+	files_sorted = sorted_ls(self.select_path)
+	files = [f for f in files_sorted if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
+	#files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
 	self.combobox_files.set_model(None)
 	model.clear()
@@ -201,9 +207,6 @@ class ImageBrowser:
     def update_image(self, widget, data):
 	self.load_data()
 	self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
-	self.view.set_data_prefix(self.data_id_str+"data")
-	layer = gwy.LayerBasic()
-	layer.set_data_key(self.data_id_str+"data")
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
 	    self.gradient_key = 'Julio'	    
@@ -213,11 +216,16 @@ class ImageBrowser:
 	self.local_c.set_int32_by_name(self.data_id_str+"base/range-type", 1)#gwy.LAYER_BASIC_RANGE_FIXED
 	self.local_c.set_double_by_name(self.data_id_str+"base/min", float(self.data_min + self.scale_min_current/100*self.data_dif))
 	self.local_c.set_double_by_name(self.data_id_str+"base/max", float(self.data_min + self.scale_max_current/100*self.data_dif))
+	self.local_c[self.data_id_str+"data"].data_changed()
 	print self.local_c[self.data_id_str+"base/min"],self.data_id_str+"base/min"
 	#print self.data_min + self.scale_min_current/100*self.data_dif,self.data_min + self.scale_max_current/100*self.data_dif
+	layer = gwy.LayerBasic()
+	layer.set_data_key(self.data_id_str+"data")
 	layer.set_gradient_key(self.data_id_str+"base/palette")
 	layer.set_range_type_key(self.data_id_str+"base")
 	layer.set_min_max_key(self.data_id_str+"base")
+	#self.local_c[self.data_id_str+"data"].clamp((self.data_min + self.scale_min_current/100*self.data_dif),(self.data_min + self.scale_max_current/100*self.data_dif))
+	self.view.set_data_prefix(self.data_id_str+"data")
 	self.view.set_base_layer(layer)
 		    
 	    
