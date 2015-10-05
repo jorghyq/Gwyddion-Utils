@@ -145,7 +145,7 @@ def save2png_text(data_path, log = 0):
     plt.yticks([])
     #plt.imsave(output,new,cmap=cm)
     plt.savefig(output,cmap=cm,bbox_inches='tight', pad_inches=0,dpi=100)
-    plt.close()
+    #plt.close()
 
 if __name__ == '__main__':
     sample_path = '/home/jorghyq/Project/GwyUtils/A150112.163633-01194.sxm'
