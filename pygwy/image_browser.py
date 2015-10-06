@@ -8,14 +8,16 @@ import gtk
 import matplotlib.pyplot as plt
 import matplotlib as mlp
 import numpy as np
-
+#from convert_sxm2png_text import save2png_text
+    
 plugin_menu = "/Basic Operations/Image Browser"
 plugin_type = "PROCESS"
 plugin_desc = "image_browser"
 
-def sorted_ls(path):
+
+def sorted_ls(path, files):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
-    return list(sorted(os.listdir(path), key=mtime))
+    return list(sorted(files, key=mtime))
 
 class ImageBrowser:
     def __init__(self):
@@ -83,6 +85,8 @@ class ImageBrowser:
 	self.scale_max = gtk.HScale(self.adjustment_scale_max)
 	self.scale_max.set_digits(0)
 	#self.scale_max.set_update_policy(gtk.UPDATE_CONTINUOUS)
+	self.button_save = gtk.Button("Save")
+	self.button_quit = gtk.Button("Quit")
 	self.hbox_channels.pack_start(self.label_channels,expand=False,fill=True,padding=0)
 	self.hbox_channels.pack_start(self.combobox_channels,expand=False,fill=True,padding=0)
 	self.hbox_directions.pack_start(self.label_directions,expand=False,fill=True,padding=0)
@@ -103,6 +107,8 @@ class ImageBrowser:
 	self.vbox_ops.pack_start(self.button_open, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_scale_min, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_scale_max, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.button_save, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_end(self.button_quit, expand=False,fill=True,padding=0)
 	self.combobox_channels.show()
 	self.combobox_directions.show()
 	self.combobox_types.show()
@@ -131,6 +137,8 @@ class ImageBrowser:
 	self.button_open.connect('clicked', self.open_file, None)
 	self.scale_min.connect('value_changed',self.update_image,None)
 	self.scale_max.connect('value_changed',self.update_image,None)
+	self.button_save.connect('clicked',self.save_file,None)
+	self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 	################################ Arrangement and show
 	self.window.add(self.vbox_main)
 	self.vbox_main.pack_start(self.hbox_files,expand=False,fill=True,padding=0)
@@ -146,6 +154,7 @@ class ImageBrowser:
 	self.hbox_main.show()
 	self.vbox_main.show()
 	self.window.show()
+	self.window.show_all()
 	
 	
     def select_path(self, widget, data):
@@ -166,14 +175,15 @@ class ImageBrowser:
 	dialog.destroy()
     
     def update_files(self):
-	files_sorted = sorted_ls(self.select_path)
-	files = [f for f in files_sorted if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
-	#files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
+	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
-	self.combobox_files.set_model(None)
-	model.clear()
-	if len(files) > 0:	    
-	    for item in files:
+	if model:
+	    model.clear()   
+	if len(files) > 0:
+	    model = self.combobox_files.get_model()
+	    self.combobox_files.set_model(None)
+	    files_sorted = sorted_ls(self.select_path, files) 
+	    for item in files_sorted:
 		#print item
 		model.append([item])
 	        #self.combobox_files.append_text(item)
@@ -187,7 +197,7 @@ class ImageBrowser:
 	if active < 0:
 	    pass
 	else:
-	    #print "changed"
+	    #print  active
 	    self.current_data = self.select_path +'/'+ model[active][0]
 	    # change the image and change the image settings
 	    self.load_new_data(self.current_data)
@@ -204,14 +214,13 @@ class ImageBrowser:
 	    self.combobox_channels.set_model(model)
 	    self.combobox_channels.set_active(self.channel_id)
 	    self.update_image(widget,None)
+	    self.adjustment_scale_min.set_value(0)
+	    self.adjustment_scale_max.set_value(100)
 	    # change the combobox_channels
 	    
     def update_image(self, widget, data):
 	self.load_data()
 	self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
-	self.view.set_data_prefix(self.data_id_str+"data")
-	layer = gwy.LayerBasic()
-	layer.set_data_key(self.data_id_str+"data")
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
 	    self.gradient_key = 'Julio'	    
@@ -221,11 +230,16 @@ class ImageBrowser:
 	self.local_c.set_int32_by_name(self.data_id_str+"base/range-type", 1)#gwy.LAYER_BASIC_RANGE_FIXED
 	self.local_c.set_double_by_name(self.data_id_str+"base/min", float(self.data_min + self.scale_min_current/100*self.data_dif))
 	self.local_c.set_double_by_name(self.data_id_str+"base/max", float(self.data_min + self.scale_max_current/100*self.data_dif))
+	self.local_c[self.data_id_str+"data"].data_changed()
 	print self.local_c[self.data_id_str+"base/min"],self.data_id_str+"base/min"
 	#print self.data_min + self.scale_min_current/100*self.data_dif,self.data_min + self.scale_max_current/100*self.data_dif
+	layer = gwy.LayerBasic()
+	layer.set_data_key(self.data_id_str+"data")
 	layer.set_gradient_key(self.data_id_str+"base/palette")
 	layer.set_range_type_key(self.data_id_str+"base")
 	layer.set_min_max_key(self.data_id_str+"base")
+	#self.local_c[self.data_id_str+"data"].clamp((self.data_min + self.scale_min_current/100*self.data_dif),(self.data_min + self.scale_max_current/100*self.data_dif))
+	self.view.set_data_prefix(self.data_id_str+"data")
 	self.view.set_base_layer(layer)
 		    
 	    
@@ -255,15 +269,10 @@ class ImageBrowser:
 	for item in c_keys:
 	    if re.search(r'title',item):
 		count = count + 1
-		#match = re.search(r'\d',item)
-		#if match:
-		    #temp_id = match.group()
-		    #title_field = '/' + str(temp_id) + '/data/title'
-		    #temp_title = self.c[title_field]
-		    #temp_channel, temp_directions = temp_title.split(' ')
-		    #print temp_id
 	#print count
 	self.channel_id = 0
+	model = self.combobox_files.get_model()
+	self.channel_str = model[self.channel_id][0]
 	self.direction_id = 0
 	for i in range(0,count,2):
 	    title = '/' + str(i) + '/data/title'
@@ -283,19 +292,28 @@ class ImageBrowser:
 	#print self.channel_id,self.direction_id, data_id
 	self.data_id_str = '/'+str(data_id)+'/'
 	self.d = self.c[self.data_id_str + 'data']
+	d_process = self.d.duplicate()
+	
 	data = self.d.get_data()
-	self.data_min = np.array(data).min()
-	#self.coef_min = 100.0/self.data_min
-	self.data_max = np.array(data).max()
-	#self.coef_min = 100.0/self.data_max
+	#self.data_min = np.array(data).min()
+	self.data_min = self.d.get_min()
+	#self.data_max = np.array(data).max()
+	self.data_max = self.d.get_max()
 	self. data_dif = self.data_max - self.data_min
 	self.scale_min_current = self.scale_min.get_value()
 	self.scale_max_current = self.scale_max.get_value()
+	bottom = self.data_min + self.scale_min_current/100*self.data_dif
+	top = self.data_min + self.scale_max_current/100*self.data_dif
+	d_process.clamp(bottom, top)
+	self.d = d_process
 	#print self.scale_min_current,self.scale_max_current
-	
+    
+    def save_file(self,widget,data):
+	#save2png_text(self.current_data,'temp')
+	self.combobox_files.grab_focus()
+		
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
-	self.combobox_files.grab_focus()
 	
 def run():
     ImageBrowser()

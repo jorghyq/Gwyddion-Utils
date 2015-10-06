@@ -81,6 +81,7 @@ class ImageBrowser:
 	self.scale_max.set_digits(0)
 	#self.scale_max.set_update_policy(gtk.UPDATE_CONTINUOUS)
 	self.button_save = gtk.Button("Save")
+	self.button_quit = gtk.Button("Quit")
 	self.hbox_channels.pack_start(self.label_channels,expand=False,fill=True,padding=0)
 	self.hbox_channels.pack_start(self.combobox_channels,expand=False,fill=True,padding=0)
 	self.hbox_directions.pack_start(self.label_directions,expand=False,fill=True,padding=0)
@@ -102,6 +103,7 @@ class ImageBrowser:
 	self.vbox_ops.pack_start(self.hbox_scale_min, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_scale_max, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.button_save, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_end(self.button_quit, expand=False,fill=True,padding=0)
 	self.combobox_channels.show()
 	self.combobox_directions.show()
 	self.combobox_types.show()
@@ -131,6 +133,7 @@ class ImageBrowser:
 	self.scale_min.connect('value_changed',self.update_image,None)
 	self.scale_max.connect('value_changed',self.update_image,None)
 	self.button_save.connect('clicked',self.save_file,None)
+	self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 	################################ Arrangement and show
 	self.window.add(self.vbox_main)
 	self.vbox_main.pack_start(self.hbox_files,expand=False,fill=True,padding=0)
