@@ -11,7 +11,8 @@ import re
 import matplotlib
 matplotlib.use('GTK')
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
+from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
+#from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 from convert_sxm2png_text import save2png_text
 #from matplotlib.backends.backend_gtkcairo import FigureCanvasGTKCairo as FigureCanvas
 
@@ -23,9 +24,20 @@ from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as Navig
 from matplotlib.backend_bases import key_press_handler
 
 
-def sorted_ls(path):
+def sorted_ls(path, files):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
-    return list(sorted(os.listdir(path), key=mtime))
+    return list(sorted(files, key=mtime))
+
+def rescale(array, high, low):
+    amin = array.min()
+    amax = array.max()
+    rng = amax - amin
+    if rng < 1e-10:
+	output = np.zeros(array.shape)
+    else:
+	output = high - (((high - low) * (amax - array)) / rng)
+	output = output.astype('uint8')
+    return output
     
 class ImageBrowser:
     def __init__(self):
@@ -56,7 +68,7 @@ class ImageBrowser:
 	self.ax.axis('off')
 	self.ax.set_xticks([])
 	self.ax.set_yticks([])
-	self.im  = self.ax.imshow(np.array([[2,4,5,5],[5,6,7,8],[7,6,5,7]]))
+	self.ax.imshow(np.array([[2,4,5,5],[5,6,7,8],[7,6,5,7]]))
 	self.canvas = FigureCanvas(self.fig)
 	self.canvas.set_size_request(600, 600)
 	#self.view = gwy.DataView(self.local_c)
@@ -191,21 +203,22 @@ class ImageBrowser:
 	dialog.destroy()
     
     def update_files(self):
-	files_sorted = sorted_ls(self.select_path)
-	files = [f for f in files_sorted if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
-	#files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
+	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
-	self.combobox_files.set_model(None)
-	model.clear()
-	if len(files) > 0:	    
-	    for item in files:
+	if model:
+	    model.clear()   
+	if len(files) > 0:
+	    model = self.combobox_files.get_model()
+	    self.combobox_files.set_model(None)
+	    files_sorted = sorted_ls(self.select_path, files) 
+	    for item in files_sorted:
 		#print item
 		model.append([item])
 	        #self.combobox_files.append_text(item)
 	    self.combobox_files.set_model(model)
 	    self.combobox_files.set_active(0)
 	    self.combobox_files.grab_focus()
-    
+	
     def update_all(self,widget,data):
 	active = self.combobox_files.get_active()
 	model = self.combobox_files.get_model()
@@ -242,7 +255,6 @@ class ImageBrowser:
 	    self.gradient_key = self.fire_cm 
 	elif re.search(r'Frequency', self.channel_str):
 	    self.gradient_key = 'gray'
-
 	self.update_view(widget,self.gradient_key)
 		    
 	    
@@ -298,22 +310,8 @@ class ImageBrowser:
 	self.data_id_str = '/'+str(data_id)+'/'
 	self.d = self.c[self.data_id_str + 'data']
 	array = np.array(self.d.get_data())
-	high = 255
-	low = 0
-	amin = array.min()
-	amax = array.max()
-	rng = amax - amin
-	self.data = high - (((high - low) * (amax - array)) / rng)
-	self.data = self.data.astype('uint8')
-	#array = np.array(d.get_data()).reshape(w,h)
-	self.data = self.data.reshape(self.w,self.h)
-	#self.data_min = np.array(self.data).min()
-	#self.coef_min = 100.0/self.data_min
-	#self.data_max = np.array(self.data).max()
-	#print self.data_min,self.data_max, self.data
-	#self. data_dif = self.data_max - self.data_min
-	
-	#print self.scale_min_current,self.scale_max_current
+	data_temp = rescale(array,255,0)
+	self.data = data_temp.reshape(self.w,self.h)
     
     def update_view(self, widget, cm):
 	self.scale_min_current = self.scale_min.get_value()
@@ -321,14 +319,15 @@ class ImageBrowser:
 	self.ax.imshow(self.data,cmap=cm,vmin = self.scale_min_current, vmax = self.scale_max_current)
 	#self.ax.clim(self.scale_min_current,self.scale_max_current)
 	self.canvas.draw()
+	#print 'update view'
     
     def save_file(self,widget,data):
 	#save2png_text(self.current_data)
-	#matplotlib.pyplot.savefig(self.data,cmap=self.gradient_key,bbox_inches='tight', pad_inches=0,dpi=100)
-	pass
-	
-	
-	
+	save_name = self.select_path + '/temp/' + os.path.basename(self.current_data)[:-3]+'png'
+	print save_name
+	self.fig.savefig(save_name,cmap=self.gradient_key,bbox_inches='tight', pad_inches=0,dpi=100)
+	self.combobox_files.grab_focus()
+	    	
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
 	
