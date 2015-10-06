@@ -241,7 +241,7 @@ class ImageBrowser:
 	    #print self.channel_str
 	    self.gradient_key = self.fire_cm 
 	elif re.search(r'Frequency', self.channel_str):
-	    self.gradient_key = 'Gray'
+	    self.gradient_key = 'gray'
 
 	self.update_view(widget,self.gradient_key)
 		    
