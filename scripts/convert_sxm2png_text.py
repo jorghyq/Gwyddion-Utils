@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mlp
 import numpy as np
 
-def save2png_text(data_path, log = 0):
+def save2png_text(data_path, dist_dir = 'overview', log = 0):
 # get the current container and datafield
     c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
     
@@ -130,7 +130,7 @@ def save2png_text(data_path, log = 0):
     output_text = str(xd)+xyu+'_'+str(yd)+xyu+'_'+bias+bu+'_'+str(current)+cu+'_'+str(w)
     plt.text(5, w+25,basename,fontsize=16)
     plt.text(5, w+50,output_text,fontsize=16)
-    output_path = os.path.join(dir_path,'overview')
+    output_path = os.path.join(dir_path,dist_dir)
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
 
