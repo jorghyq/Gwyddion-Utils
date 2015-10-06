@@ -239,10 +239,14 @@ class ImageBrowser:
 		    
 	    
     def load_new_data(self, data_path):
+	#gwy.gwy_app_data_browser_remove(self.c)
 	self.c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
 	data_field_id = 0
 	data_field = '/' + str(data_field_id) + '/data'
 	self.d = self.c[data_field]
+	gwy.gwy_app_data_browser_add(self.c)
+	gwy.gwy_app_data_browser_select_data_field(self.c, 0)
+	gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
 	meta_field = '/' + str(data_field_id) + '/meta'
 	#title = '/' + str(data_field_id) + '/data/title'
 	#self.channel = self.c[title]
@@ -276,6 +280,7 @@ class ImageBrowser:
 	    temp_directions = temp_directions[1:-1]
 	    #print temp_directions, i
 	    self.channels.append(temp_channel)
+	gwy.gwy_app_data_browser_remove(self.c)
     
     def load_data(self):
 	self.channel_id = self.combobox_channels.get_active()
@@ -301,6 +306,8 @@ class ImageBrowser:
 	top = self.data_min + self.scale_max_current/100*self.data_dif
 	d_process.clamp(bottom, top)
 	self.d = d_process
+	
+	
 	#print self.scale_min_current,self.scale_max_current
     
     def save_file(self,widget,data):
