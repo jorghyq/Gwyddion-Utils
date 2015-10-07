@@ -315,7 +315,7 @@ class ImageBrowser:
 	self.d = d_process
     
     def save_file(self,widget,data):
-	save2png_text(self.current_data,'temp')
+	save2png_text(self.current_data,self.d,'temp')
 	self.combobox_files.grab_focus()
 		
     def open_file(self,widget,data):

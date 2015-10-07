@@ -6,21 +6,15 @@ import matplotlib.pyplot as plt
 import matplotlib as mlp
 import numpy as np
 
-def save2png_text(data_path, dist_dir = 'overview', log = 0):
+def save2png_text(data_path, data, dist_dir = 'overview', log = 0):
 # get the current container and datafield
     c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
-    
-    #c = gwy.gwy_app_file_load(data_path)
-    #print c.keys_by_name()
     data_field_id = 0
     data_field = '/' + str(data_field_id) + '/data'
     d = c[data_field]
     #gwy.gwy_process_func_run("facet-level", c, gwy.RUN_IMMEDIATE)
     #filename = c['/filename']
     dir_path,basename = os.path.split(data_path)
-    #dir_path = data_path
-    #print data_path
-    #basename = basename[0:-4]
 
     meta_field = '/' + str(data_field_id) + '/meta'
     title = '/' + str(data_field_id) + '/data/title'
@@ -39,54 +33,42 @@ def save2png_text(data_path, dist_dir = 'overview', log = 0):
     yd = d.get_yreal() * 1e9
     xyu = 'nm'
 
-# prepare to save
     w = d.get_xres()
     h = d.get_yres()
-    ############## DATA PROCESSING #################
-    #old_plane = d.fit_plane()
-    #print type(old_plane)
-    #tmp = old_plane[0]
-    #bx = old_plane[1]
-    #by = old_plane[2]
-    #tmp = -0.5*(bx*float(w)+ by*float(h));
-    #d.plane_level(tmp,bx,by)
-    #d.data_changed()
-    
-    ############# DATA PROCESSING END ##############
-    data_field = '/' + str(data_field_id) + '/data'
+    #data_field = '/' + str(data_field_id) + '/data'
     #array = gwyutils.data_field_data_as_array(d)
     #d.data_changed()
     
-    array = np.array(d.get_data()).reshape(w,h)
+    array = np.array(data.get_data()).reshape(w,h)
     ############## DATA PROCESSING #################
-    data_temp = array.T
-    n = w
-    xi = np.arange(n)
-    #print xi
-    x= np.array([xi,np.ones(n)])
-    w_temp = np.linalg.lstsq(x.T,data_temp)[0]
-    data_sub = np.zeros([n,n])
-    X = np.array([xi,]*int(n)).T
-    Y = (X*w_temp[0]+w_temp[1]).T
-    array = array - Y
+    #data_temp = array.T
+    #n = w
+    #xi = np.arange(n)
+    ##print xi
+    #x= np.array([xi,np.ones(n)])
+    #w_temp = np.linalg.lstsq(x.T,data_temp)[0]
+    #data_sub = np.zeros([n,n])
+    #X = np.array([xi,]*int(n)).T
+    #Y = (X*w_temp[0]+w_temp[1]).T
+    #array = array - Y
     #print array.shape
     ############# DATA PROCESSING END ##############
     
     #array = np.transpose(array)
     # set the rescaling
-    b_name = '/' + str(data_field_id) + '/base/'
-    range_type = '/' + str(data_field_id) + '/range-type'
-    c.set_string_by_name(range_type,'2')
+    #b_name = '/' + str(data_field_id) + '/base/'
+    #range_type = '/' + str(data_field_id) + '/range-type'
+    #c.set_string_by_name(range_type,'2')
     
-    b_min = b_name + 'min'
-    b_max = b_name + 'max'
-    if c.contains_by_name(b_min) and c.contains_by_name(b_max):
-        pixel_min = c[b_min]
-        pixel_max = c[b_max]
-        CHANGE_COLOR_RANGE = 1
-        if CHANGE_COLOR_RANGE:
-            array[np.where(array < pixel_min)] = pixel_min
-            array[np.where(array > pixel_max)] = pixel_max
+    ##b_min = b_name + 'min'
+    #b_max = b_name + 'max'
+    #if c.contains_by_name(b_min) and c.contains_by_name(b_max):
+        #pixel_min = c[b_min]
+        #pixel_max = c[b_max]
+        #CHANGE_COLOR_RANGE = 1
+        #if CHANGE_COLOR_RANGE:
+            #array[np.where(array < pixel_min)] = pixel_min
+            #array[np.where(array > pixel_max)] = pixel_max
     high = 255
     low = 0
     amin = array.min()
