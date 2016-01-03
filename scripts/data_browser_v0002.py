@@ -4,6 +4,8 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import sys
+sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
 import gwy
 import os
 import numpy as np
@@ -19,7 +21,7 @@ class ImageBrowser:
 	########### Initialize some variables ##############
 	self.CHANNEL = None
 	self.DIRECTION = None
-	
+
 	########### Initialize gui #########################
 	self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	self.window.connect("destroy", lambda w: gtk.main_quit())
@@ -144,11 +146,11 @@ class ImageBrowser:
 	self.hbox_main.pack_start(self.view,expand=True,fill=True,padding=0)
 	self.hbox_main.pack_end(self.vbox_ops,expand=True,fill=True,padding=0)
 	self.window.show_all()
-	
-	
+
+
     def select_path(self, widget, data):
 	# load image
-	dialog = gtk.FileChooserDialog("Open..", self.window, 
+	dialog = gtk.FileChooserDialog("Open..", self.window,
 	gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 	gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 	dialog.set_default_response(gtk.RESPONSE_OK)
@@ -162,16 +164,16 @@ class ImageBrowser:
 	    #print 'Closed, no files selected'
 	    pass
 	dialog.destroy()
-    
+
     def update_files(self):
 	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
 	if model:
-	    model.clear()   
+	    model.clear()
 	if len(files) > 0:
 	    model = self.combobox_files.get_model()
 	    self.combobox_files.set_model(None)
-	    files_sorted = sorted_ls(self.select_path, files) 
+	    files_sorted = sorted_ls(self.select_path, files)
 	    for item in files_sorted:
 		#print item
 		model.append([item])
@@ -179,7 +181,7 @@ class ImageBrowser:
 	    self.combobox_files.set_model(model)
 	    self.combobox_files.set_active(0)
 	    self.combobox_files.grab_focus()
-    
+
     def update_all(self,widget,data):
 	active = self.combobox_files.get_active()
 	model = self.combobox_files.get_model()
@@ -207,7 +209,7 @@ class ImageBrowser:
 	    self.adjustment_scale_max.set_value(100)
 	    #self.update_image(widget,None)
 	    # change the combobox_channels
-	    
+
     def update_image(self, widget, data):
 	#print "update"
 	gwy.gwy_app_data_browser_add(self.c)
@@ -218,7 +220,7 @@ class ImageBrowser:
 	self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
-	    self.gradient_key = 'Julio'	    
+	    self.gradient_key = 'Julio'
 	elif re.search(r'Frequency', self.channel_str):
 	    self.gradient_key = 'Gray'
 	self.local_c.set_string_by_name(self.data_id_str+"base/palette", self.gradient_key)
@@ -237,8 +239,8 @@ class ImageBrowser:
 	self.view.set_base_layer(layer)
 	self.combobox_files.grab_focus()
 	gwy.gwy_app_data_browser_remove(self.c)
-		    
-	    
+
+
     def load_new_data(self):
 	self.d_origin = None
 	#gwy.gwy_app_data_browser_remove(self.c)
@@ -278,7 +280,7 @@ class ImageBrowser:
 	    #print temp_directions, i
 	    self.channels.append(temp_channel)
 	#gwy.gwy_app_data_browser_remove(self.c)
-    
+
     def load_data(self):
 	self.channel_id = self.combobox_channels.get_active()
 	model = self.combobox_channels.get_model()
@@ -309,20 +311,20 @@ class ImageBrowser:
 	d_process.clamp(bottom, top)
 	#self.d.clamp(bottom, top)
 	self.d = d_process
-    
+
     def save_file(self,widget,data):
 	save2png_text(self.current_data,'temp')
 	self.combobox_files.grab_focus()
-		
+
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
-	
-	
-	
+
+
+
 def main():
     gtk.main()
     return 0
-	
+
 if __name__ == "__main__":
     ImageBrowser()
     main()

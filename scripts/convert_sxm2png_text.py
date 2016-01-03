@@ -1,15 +1,16 @@
-import gwy
 import re
 import os
 import sys
+sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
 import matplotlib.pyplot as plt
+import gwy
 import matplotlib as mlp
 import numpy as np
 
 def save2png_text(data_path, dist_dir = 'overview', log = 0):
 # get the current container and datafield
     c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
-    
+
     #c = gwy.gwy_app_file_load(data_path)
     #print c.keys_by_name()
     data_field_id = 0
@@ -51,12 +52,12 @@ def save2png_text(data_path, dist_dir = 'overview', log = 0):
     #tmp = -0.5*(bx*float(w)+ by*float(h));
     #d.plane_level(tmp,bx,by)
     #d.data_changed()
-    
+
     ############# DATA PROCESSING END ##############
     data_field = '/' + str(data_field_id) + '/data'
     #array = gwyutils.data_field_data_as_array(d)
     #d.data_changed()
-    
+
     array = np.array(d.get_data()).reshape(w,h)
     ############## DATA PROCESSING #################
     data_temp = array.T
@@ -71,13 +72,13 @@ def save2png_text(data_path, dist_dir = 'overview', log = 0):
     array = array - Y
     #print array.shape
     ############# DATA PROCESSING END ##############
-    
+
     #array = np.transpose(array)
     # set the rescaling
     b_name = '/' + str(data_field_id) + '/base/'
     range_type = '/' + str(data_field_id) + '/range-type'
     c.set_string_by_name(range_type,'2')
-    
+
     b_min = b_name + 'min'
     b_max = b_name + 'max'
     if c.contains_by_name(b_min) and c.contains_by_name(b_max):
@@ -99,7 +100,7 @@ def save2png_text(data_path, dist_dir = 'overview', log = 0):
     new = new.astype('uint8')
     # load colormap
     palette_name = '/' + str(data_field_id) + '/base/palette'
-    cm = 'gray' 
+    cm = 'gray'
     #if c.contains_by_name(palette_name):
         #palette = c[palette_name]
         #if palette == "Julio":
