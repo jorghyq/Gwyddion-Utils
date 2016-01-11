@@ -4,6 +4,8 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import sys
+sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
 import gwy
 import os
 import numpy as np
@@ -38,7 +40,7 @@ def rescale(array, high, low):
 	output = high - (((high - low) * (amax - array)) / rng)
 	output = output.astype('uint8')
     return output
-    
+
 class ImageBrowser:
     def __init__(self):
 	########### Initialize some variables ##############
@@ -47,7 +49,7 @@ class ImageBrowser:
 	# load cmap
 	self.fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
 	self.fire_cm = matplotlib.colors.ListedColormap(self.fire/255)
-	self.gradient_key = self.fire_cm 
+	self.gradient_key = self.fire_cm
 	########### Initialize gui #########################
 	self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	self.window.connect("destroy", lambda w: gtk.main_quit())
@@ -182,11 +184,11 @@ class ImageBrowser:
 	#self.hbox_main.show()
 	#self.vbox_main.show()
 	self.window.show_all()
-	
-	
+
+
     def select_path(self, widget, data):
 	# load image
-	dialog = gtk.FileChooserDialog("Open..", self.window, 
+	dialog = gtk.FileChooserDialog("Open..", self.window,
 	gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 	gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 	dialog.set_default_response(gtk.RESPONSE_OK)
@@ -200,16 +202,16 @@ class ImageBrowser:
 	    #print 'Closed, no files selected'
 	    pass
 	dialog.destroy()
-    
+
     def update_files(self):
 	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
 	if model:
-	    model.clear()   
+	    model.clear()
 	if len(files) > 0:
 	    model = self.combobox_files.get_model()
 	    self.combobox_files.set_model(None)
-	    files_sorted = sorted_ls(self.select_path, files) 
+	    files_sorted = sorted_ls(self.select_path, files)
 	    for item in files_sorted:
 		#print item
 		model.append([item])
@@ -217,7 +219,7 @@ class ImageBrowser:
 	    self.combobox_files.set_model(model)
 	    self.combobox_files.set_active(0)
 	    self.combobox_files.grab_focus()
-	
+
     def update_all(self,widget,data):
 	active = self.combobox_files.get_active()
 	model = self.combobox_files.get_model()
@@ -244,19 +246,19 @@ class ImageBrowser:
 	    self.adjustment_scale_min.set_value(0)
 	    self.adjustment_scale_max.set_value(256)
 	    # change the combobox_channels
-	    
+
     def update_image(self, widget, data):
 	self.load_data()
-	self.gradient_key = self.fire_cm 
+	self.gradient_key = self.fire_cm
 	#self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
-	    self.gradient_key = self.fire_cm 
+	    self.gradient_key = self.fire_cm
 	elif re.search(r'Frequency', self.channel_str):
 	    self.gradient_key = 'gray'
 	self.update_view(widget,self.gradient_key)
-		    
-	    
+
+
     def load_new_data(self, data_path):
 	self.c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
 	data_field_id = 0
@@ -297,7 +299,7 @@ class ImageBrowser:
 	    temp_directions = temp_directions[1:-1]
 	    #print temp_directions, i
 	    self.channels.append(temp_channel)
-    
+
     def load_data(self):
 	self.channel_id = self.combobox_channels.get_active()
 	model = self.combobox_channels.get_model()
@@ -311,32 +313,32 @@ class ImageBrowser:
 	array = np.array(self.d.get_data())
 	data_temp = rescale(array,255,0)
 	self.data = data_temp.reshape(self.w,self.h)
-    
+
     def update_view(self, widget, cm):
 	self.scale_min_current = self.scale_min.get_value()
 	self.scale_max_current = self.scale_max.get_value()
 	self.ax.imshow(self.data,cmap=cm,vmin = self.scale_min_current, vmax = self.scale_max_current)
-	
+
 
 	self.canvas.draw()
 	#print 'update view'
-    
+
     def save_file(self,widget,data):
 	#save2png_text(self.current_data)
 	save_name = self.select_path + '/temp/' + os.path.basename(self.current_data)[:-3]+'png'
 	print save_name
 	self.fig.savefig(save_name,cmap=self.gradient_key,bbox_inches='tight', pad_inches=0,dpi=100)
 	self.combobox_files.grab_focus()
-	    	
+
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
-	
-	
-	
+
+
+
 def main():
     gtk.main()
     return 0
-	
+
 if __name__ == "__main__":
     ImageBrowser()
     main()
