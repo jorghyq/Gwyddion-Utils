@@ -34,8 +34,8 @@ class Imager():
         # Definition of the hbox_main
         self.combobox_channels = gtk.combo_box_new_text()
         self.combobox_directions = gtk.combo_box_new_text()
-        self.combobox_directions.append_text("Forward")
-        self.combobox_directions.append_text("Backward")
+        self.combobox_directions.append_text("F")
+        self.combobox_directions.append_text("B")
         self.combobox_directions.set_active(0)
         self.label_channels = gtk.Label("<b>Channel: </b>")
         self.label_channels.set_use_markup(True)

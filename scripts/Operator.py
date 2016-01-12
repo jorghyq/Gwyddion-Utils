@@ -5,15 +5,19 @@ import gtk
 import sys
 sys.path.insert(1, "/usr/local/lib64/python2.7/site-packages")
 import gwy
+import os
 import shutil
+from convert_sxm2png_text import save2png_text
 
 # Class for navigation
 class Operator():
     def __init__(self,parent):
         self.parent = parent
         # Definition of the variables
-        self.current_data = None
+        self.c = None
+        self.param = None
         self.dest_path = None
+        self.channel = None
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
         self.button_save = gtk.Button("Save")
@@ -32,22 +36,30 @@ class Operator():
         self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 
     def save_file(self,widget,data):
-        if self.current_data:
-            save2png_text(self.current_data,'temp')
+        #print self.dest_path, self.channel
+        if self.c and self.channel:
+            save2png_text(self.c,self.param,self.dest_path,self.channel)
             #self.combobox_files.grab_focus()
 
     def copy_file(self,widget,data):
-        if self.current_data:
-            shutil.copy(self.current_data,self.dest_path+os.path.basename(self.current_data))
+        if self.c:
+            if self.dest_path:
+                shutil.copy(self.param['full_path'],self.dest_path+os.path.basename(self.param['full_path']))
+            else:
+                shutil.copy(self.param['full_path'],os.path.dirname(self.param['full_path'])+'/temp/'+os.path.basename(self.param['full_path']))
+
 
     def open_file(self,widget,data):
         if self.current_data:
             #self.current_data = data
             gwy.gwy_app_file_load(self.current_data)
 
-    def get_current_data(self,data_path,dest_path):
-        self.current_data = data_path
+    def get_current_data(self,container,param,dest_path,channel):
+        #print dest_path,channel
+        self.c = container
+        self.param = param
         self.dest_path = dest_path
+        self.channel = channel
 
 def main():
     gtk.main()

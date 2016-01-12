@@ -17,7 +17,6 @@ class GwyData():
 
     def load_data(self,data_path):
         self.current_data = data_path
-        #print self.current_data
         self.c = gwy.gwy_file_load(self.current_data,gwy.RUN_NONINTERACTIVE)
         data_field_id = 0
         data_field = '/' + str(data_field_id) + '/data'
@@ -26,6 +25,7 @@ class GwyData():
         meta = self.c[meta_field]
         bias = meta['Bias']
         #print bias
+        self.param['full_path'] = self.current_data
         self.param['bias'] = bias.split(' ')[0]
         self.param['bu'] = bias.split(' ')[-1]
         current = meta['Z controller Setpoint']
@@ -61,8 +61,11 @@ class GwyData():
     def get_container(self):
         return self.c
 
+    #def save2png(self):
+
+
 
 if __name__ == "__main__":
     gwydata =GwyData()
-    gwydata.load_data('/home/jorghyq/Project/Gwyddion-Utils/A151201.000102-01691.sxm')
+    gwydata.load_data('/home/jorghyq/Project/Gwyddion-Utils/test/A151117.155350-00742.sxm')
     print gwydata.param['channels']

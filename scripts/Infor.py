@@ -56,9 +56,8 @@ class Infor():
         self.param = data
         self.label_volt.set_text(self.param['bias']+' '+ self.param['bu'])
         self.label_current.set_text(str(self.param['current']) +' '+ self.param['cu'])
-        self.label_w.set_text(str(self.param['width']) +' '+ self.param['xyu'])
-        self.label_h.set_text(str(self.param['height']) +' '+ self.param['xyu'])
-
+        self.label_w.set_text("{0:.1f}".format(self.param['width']) +' '+ self.param['xyu']+'['+str(self.param['w_dim'])+']')
+        self.label_h.set_text("{0:.1f}".format(self.param['height']) +' '+ self.param['xyu']+'['+str(self.param['h_dim'])+']')
 
 def main():
     gtk.main()

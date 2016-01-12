@@ -101,8 +101,11 @@ class Navigator():
 
     def set_path2save(self,widget,data):
         if self.path_selected:
-            self.path2save = self.path_selected + '/temp'
+            self.path2save = self.path_selected + '/temp/'
             self.label_save_dir.set_text(self.path2save)
+
+    def get_path2save(self):
+        return self.path2save
 
     def new_path2save(self,widget,data):
         dialog = gtk.FileChooserDialog("Open..", self.parent,
@@ -112,7 +115,7 @@ class Navigator():
         #dialog.set_action(gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
         response = dialog.run()
         if response == gtk.RESPONSE_OK:
-            self.path2save = dialog.get_filename() + '/temp'
+            self.path2save = dialog.get_filename() + '/temp/'
             self.label_save_dir.set_text(self.path2save)
             #print dialog.get_filename(), 'selected'
         elif response == gtk.RESPONSE_CANCEL:
