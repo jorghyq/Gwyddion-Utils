@@ -25,7 +25,7 @@ class GwyData():
         meta_field = '/' + str(data_field_id) + '/meta'
         meta = self.c[meta_field]
         bias = meta['Bias']
-        print bias
+        #print bias
         self.param['bias'] = bias.split(' ')[0]
         self.param['bu'] = bias.split(' ')[-1]
         current = meta['Z controller Setpoint']
@@ -55,11 +55,11 @@ class GwyData():
             channels.append(temp_channel)
         self.param['channels'] = channels
 
-        def get_param(self):
-            return self.param
+    def get_param(self):
+        return self.param
 
-        def get_container(self):
-            return self.c
+    def get_container(self):
+        return self.c
 
 
 if __name__ == "__main__":

@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 import pygtk
 pygtk.require('2.0')
-import gobject
 import gtk
 import sys
-import os
-sys.path.insert(1,"/usr/local/lib64/python2.7/site-packages")
+sys.path.insert(1, "/usr/local/lib64/python2.7/site-packages")
 import gwy
-import re
-import numpy as np
+import shutil
 
 # Class for navigation
 class Operator():
-    __gtype_name__ = 'Operator'
-
     def __init__(self,parent):
         self.parent = parent
         # Definition of the variables
         self.current_data = None
+        self.dest_path = None
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
         self.button_save = gtk.Button("Save")
@@ -36,16 +32,22 @@ class Operator():
         self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 
     def save_file(self,widget,data):
-        #self.current_data = data
-        save2png_text(self.current_data,'temp')
-        self.combobox_files.grab_focus()
+        if self.current_data:
+            save2png_text(self.current_data,'temp')
+            #self.combobox_files.grab_focus()
 
     def copy_file(self,widget,data):
-        pass
+        if self.current_data:
+            shutil.copy(self.current_data,self.dest_path+os.path.basename(self.current_data))
 
     def open_file(self,widget,data):
-        #self.current_data = data
-        gwy.gwy_app_file_load(self.current_data)
+        if self.current_data:
+            #self.current_data = data
+            gwy.gwy_app_file_load(self.current_data)
+
+    def get_current_data(self,data_path,dest_path):
+        self.current_data = data_path
+        self.dest_path = dest_path
 
 def main():
     gtk.main()

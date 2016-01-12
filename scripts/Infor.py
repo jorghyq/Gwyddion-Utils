@@ -12,8 +12,6 @@ import numpy as np
 from GwyData import GwyData
 # Class for navigation
 class Infor():
-    __gtype_name__ = 'Infor'
-
     def __init__(self,parent):
         self.parent = parent
         # Definiton of the variables
@@ -53,9 +51,9 @@ class Infor():
         self.table_info.attach(self.label_types,0,1,4,5)
         self.table_info.attach(self.combobox_types,1,2,4,5)
 
-    def initialize(self,container,param):
-        self.c = container
-        self.param = param
+    def initialize(self,widget,data):
+        #self.c = container
+        self.param = data
         self.label_volt.set_text(self.param['bias']+' '+ self.param['bu'])
         self.label_current.set_text(str(self.param['current']) +' '+ self.param['cu'])
         self.label_w.set_text(str(self.param['width']) +' '+ self.param['xyu'])
