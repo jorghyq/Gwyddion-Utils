@@ -6,6 +6,7 @@ import gtk
 import sys
 import os
 sys.path.insert(1,"/usr/local/lib64/python2.7/site-packages")
+sys.path.insert(1,"src/")
 import gwy
 import re
 import numpy as np
