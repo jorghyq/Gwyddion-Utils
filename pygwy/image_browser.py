@@ -5,7 +5,7 @@ import gobject
 import gtk
 import sys
 import os
-sys.path.insert(1,"src/")
+sys.path.insert(1,"/home/jorghyq/.gwyddion/pygwy/src/")
 import gwy
 import re
 import numpy as np
