@@ -6,7 +6,6 @@ import sys
 sys.path.insert(1,"/usr/local/lib64/python2.7/site-packages")
 import gwy
 import re
-import numpy as np
 from GwyData import GwyData
 from Navigator import Navigator
 
@@ -21,7 +20,10 @@ class Imager():
         self.channels = None
         self.direction_str = None
         self.direction_id = 0
+        self.process_str = None
+        self.process_id = 0
         self.param = None
+        self.gradient_key = 'Julio'
 
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
@@ -37,6 +39,10 @@ class Imager():
         self.combobox_directions.append_text("F")
         self.combobox_directions.append_text("B")
         self.combobox_directions.set_active(0)
+        self.combobox_processes = gtk.combo_box_new_text()
+        self.combobox_processes.append_text("None")
+        self.combobox_processes.append_text("P-level")
+        self.combobox_processes.set_active(0)
         self.label_channels = gtk.Label("<b>Channel: </b>")
         self.label_channels.set_use_markup(True)
         self.label_directions = gtk.Label("<b>Direction: </b>")
@@ -45,6 +51,7 @@ class Imager():
         self.hbox_main.pack_start(self.combobox_channels,0,1,0)
         self.hbox_main.pack_end(self.combobox_directions,0,1,0)
         self.hbox_main.pack_end(self.label_directions,0,1,0)
+        self.hbox_main.pack_end(self.combobox_processes,0,1,0)
 
         # Signal handling
         self.combobox_channels.connect('changed',self.update_image,None)
@@ -88,6 +95,12 @@ class Imager():
             self.channel_str = model[self.channel_id][0]
             return self.channel_str
 
+    def get_active_process(self):
+        model = self.combobox_processes.get_model()
+        self.process_id = self.combobox_processes.get_active()
+        self.channel_str = model[self.process_id][0]
+        return self.process_id
+
     def load_data(self):
         self.channel_id = self.combobox_channels.get_active()
         model = self.combobox_channels.get_model()
@@ -106,9 +119,10 @@ class Imager():
             else:
                 self.d_origin = self.c[self.data_id_str + 'data']
             gwy.gwy_app_data_browser_select_data_field(self.c,0)
-            #if self.togglebutton_level.get_active():
-            #    gwy.gwy_app_data_browser_select_data_field(self.c, 0)
-            #    gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
+            self.get_active_process()
+            if self.process_id == 1:
+                gwy.gwy_app_data_browser_select_data_field(self.c, 0)
+                gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
             self.d = self.c[self.data_id_str + 'data']
             d_process = self.d.duplicate()
             #self.data_min = self.d.get_min()
