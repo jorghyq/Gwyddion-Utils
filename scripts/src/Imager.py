@@ -23,7 +23,7 @@ class Imager():
         self.process_str = None
         self.process_id = 0
         self.param = None
-        self.gradient_key = 'Julio'
+        self.gradient_key = 'julio'
 
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
@@ -177,7 +177,7 @@ class Imager():
         self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
         if re.search(r'Z', self.channel_str):
             #print self.channel_str
-            self.gradient_key = 'Julio'
+            self.gradient_key = 'julio'
         elif re.search(r'Frequency', self.channel_str):
             self.gradient_key = 'Gray'
         self.local_c.set_string_by_name(self.data_id_str+"base/palette", self.gradient_key)
