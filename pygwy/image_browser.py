@@ -5,7 +5,8 @@ import gobject
 import gtk
 import sys
 import os
-sys.path.insert(1,"/home/jorghyq/.gwyddion/pygwy/src/")
+sys.path.insert(1,"/usr/local/lib64/python2.7/site-packages")
+sys.path.insert(1,"src/")
 import gwy
 import re
 import numpy as np
@@ -86,11 +87,6 @@ class SPMBrowser():
             if active >= 0:
                 self.navi.go_backward(widget,data)
 
-def run():
-    SPMBrowser()
-    gtk.main()
-    return 0
-
 #def main():
 #    gtk.main()
 #    return 0
@@ -98,3 +94,9 @@ def run():
 #if __name__ == "__main__":
 #    SPMBrowser()
 #    main()
+
+def run():
+    SPMBrowser()
+    gtk.main()
+    return 0
+
