@@ -60,8 +60,8 @@ class SPMBrowser():
             self.gwydata.load_data(self.current_data)
             self.info.initialize(widget,self.gwydata.param)
             #print self.gwydata.param['channels']
-            self.img_1.initialize(self.gwydata.get_container(),self.gwydata.get_param(),self.channel_img_1)
-            self.img_2.initialize(self.gwydata.get_container(),self.gwydata.get_param(),self.channel_img_2)
+            self.img_1.initialize(self.gwydata,self.channel_img_1)
+            self.img_2.initialize(self.gwydata,self.channel_img_2)
             self.oper.get_current_data(self.gwydata.get_container(),self.gwydata.get_param(),self.navi.get_path2save(),'Z')
 
     def record_channels(self,widget,data):

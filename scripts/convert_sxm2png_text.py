@@ -2,7 +2,6 @@ import re
 import os
 import sys
 sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
-sys.path.insert(1,'./src')
 import matplotlib.pyplot as plt
 import gwy
 from GwyData import GwyData
@@ -13,12 +12,12 @@ import numpy as np
 def ffs(input_float):
     return "{0:.1f}".format(input_float)
 
-def save2png_text(container,param, dest_dir=None, channel='Z'):
+def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir = None):
     c = container
     param = param
     channels = param['channels']
     if channel in channels:
-        data_field_id = channels.index(channel)
+        data_field_id = channels.index(channel)*2
     else:
         data_field_id = 0
     data_field = '/' + str(data_field_id) + '/data'
@@ -34,20 +33,19 @@ def save2png_text(container,param, dest_dir=None, channel='Z'):
     xyu = param['xyu']
     w = param['w_dim']
     h = param['h_dim']
-    data_field = '/' + str(data_field_id) + '/data'
     # load the data
     array = np.array(d.get_data()).reshape(w,h)
     ############## DATA PROCESSING #################
-    data_temp = array.T
-    n = w
-    xi = np.arange(n)
+    #data_temp = array.T
+    #n = w
+    #xi = np.arange(n)
     #print xi
-    x= np.array([xi,np.ones(n)])
-    w_temp = np.linalg.lstsq(x.T,data_temp)[0]
-    data_sub = np.zeros([n,n])
-    X = np.array([xi,]*int(n)).T
-    Y = (X*w_temp[0]+w_temp[1]).T
-    array = array - Y
+    #x= np.array([xi,np.ones(n)])
+    #w_temp = np.linalg.lstsq(x.T,data_temp)[0]
+    #data_sub = np.zeros([n,n])
+    #X = np.array([xi,]*int(n)).T
+    #Y = (X*w_temp[0]+w_temp[1]).T
+    #array = array - Y
     #print array.shape
     ############# DATA PROCESSING END ##############
     #b_name = '/' + str(data_field_id) + '/base/'
@@ -68,20 +66,27 @@ def save2png_text(container,param, dest_dir=None, channel='Z'):
     amax = array.max()
     rng = amax - amin
     array2 = high - (((high - low) * (amax - array)) / rng)
+    if cm_low and cm_high:
+        cut_low = cm_low
+        cut_high = cm_high
+        array2[np.where(array < cutlow)] = cut_low
+        array2[np.where(array > cut_high)] = cut_high
     new = np.zeros((w+int(round(w*0.06)),h))
     new[:,:] = 255
     new[:w,:h] = array2
     new = new.astype('uint8')
     # load colormap
     palette_name = '/' + str(data_field_id) + '/base/palette'
-    cm = 'gray'
+    if channel == 'Frequency Shift':
+        cm = 'gray'
     #if c.contains_by_name(palette_name):
         #palette = c[palette_name]
         #if palette == "Julio":
             #fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
             #cm = mlp.colors.ListedColormap(fire/255)
-    #fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
-    #cm = mlp.colors.ListedColormap(fire/255)
+    else:
+        fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
+        cm = mlp.colors.ListedColormap(fire/255)
     #cm = 'Gwyddion.net'
     img = plt.imshow(new, cmap = cm)
     # determine the channel

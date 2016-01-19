@@ -38,7 +38,7 @@ class Operator():
     def save_file(self,widget,data):
         #print self.dest_path, self.channel
         if self.c and self.channel:
-            save2png_text(self.c,self.param,self.dest_path,self.channel)
+            save2png_text(self.c,self.param,self.channel)
             #self.combobox_files.grab_focus()
 
     def copy_file(self,widget,data):
