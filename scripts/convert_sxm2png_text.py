@@ -10,7 +10,10 @@ import numpy as np
 
 # format float to string
 def ffs(input_float):
-    return "{0:.1f}".format(input_float)
+    if type(input_float) == 'str':
+        return input_float
+    else:
+        return "{0:.1f}".format(input_float)
 
 def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir = None):
     c = container
@@ -100,7 +103,7 @@ def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir
         ch_out = 'current'
     if match_z:
         ch_out = 'z'
-    output_text = ffs(xd)+xyu+'_'+ffs(yd)+xyu+'_'+bias+bu+'_'+ffs(current)+cu+'_'+str(w)+'_'+str(h)
+    output_text = ffs(xd)+xyu+'_'+ffs(yd)+xyu+'_'+ffs(bias)+bu+'_'+ffs(current)+cu+'_'+str(w)+'_'+str(h)
     plt.text(5, w+int(round(w*0.03)),basename,fontsize=12)
     plt.text(5, w+int(round(w*0.06)),output_text,fontsize=12)
     if dest_dir:

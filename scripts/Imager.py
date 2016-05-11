@@ -104,16 +104,22 @@ class Imager():
             self.combobox_channels.set_model(None)
             for item in self.channels:
                 model.append([item])
+                print item
             self.combobox_channels.set_model(model)
             if active_channel:
+                print self.channels,active_channel
                 if active_channel in self.channels:
                     #print self.channels, active_channel
                     active = self.channels.index(active_channel)
                     self.channel_id = active
                     self.channel_str = active_channel
+                else:
+                    self.channel_id = 0
+                    self.channel_str = self.channels[self.channel_id]
             else:
                 self.channel_id = 0
                 self.channel_str = self.channels[self.channel_id]
+            print self.channel_str,self.channel_id
             self.combobox_channels.set_active(self.channel_id)
             self.adjustment_scale_min.set_value(0)
             self.adjustment_scale_max.set_value(100)
@@ -145,19 +151,24 @@ class Imager():
             self.channel_str = model[self.channel_id][0]
             #print self.channel_str
             self.direction_id = self.combobox_directions.get_active()
+            #if self.gwydata.param['full_path'][-6:]=='Z_mtrx':
+            #    data_id = self.channel_id
+            #else:
             data_id = self.channel_id * 2 + self.direction_id
             #print self.channel_id,self.direction_id, data_id
             self.data_id_str = '/'+str(data_id)+'/'
+            print data_id,self.data_id_str
             self.d_origin = self.c[self.data_id_str + 'data']
             #self.d = self.d_origin.duplicate()
             if self.d_origin:
                 self.c.set_object_by_name(self.data_id_str + 'data',self.d_origin)
             else:
                 self.d_origin = self.c[self.data_id_str + 'data']
-            gwy.gwy_app_data_browser_select_data_field(self.c,0)
+            gwy.gwy_app_data_browser_select_data_field(self.c,data_id)
             self.get_active_process()
+            print self.process_id
             if self.process_id == 1:
-                gwy.gwy_app_data_browser_select_data_field(self.c, 0)
+                gwy.gwy_app_data_browser_select_data_field(self.c, data_id)
                 gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
                 #gwy.gwy_process_func_run("level", self.c, gwy.RUN_INTERACTIVE)
             self.d = self.c[self.data_id_str + 'data']

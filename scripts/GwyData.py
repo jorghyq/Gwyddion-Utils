@@ -19,6 +19,10 @@ class GwyData():
     def __init__(self):
         self.c = None
         self.param = {}
+        self.param['bias'] = 'NG'
+        self.param['bu'] = 'V'
+        self.param['current'] = 'NG'
+        self.param['cu'] = 'nA'
 
     def load_data(self,data_path):
         self.current_data = data_path
@@ -28,15 +32,21 @@ class GwyData():
         self.d = self.c[data_field]
         meta_field = '/' + str(data_field_id) + '/meta'
         meta = self.c[meta_field]
-        bias = meta['Bias']
+        if meta.contains_by_name('Bias'):
+            bias = meta['Bias']
+            self.param['bias'] = bias.split(' ')[0]
+            self.param['bu'] = bias.split(' ')[-1]
         #print bias
+        if self.c.contains_by_name('/meta/eepa/GapVoltageControl.Voltage'):
+            self.param['bias'] = self.c['/meta/eepa/GapVoltageControl.Voltage']
         self.param['full_path'] = self.current_data
-        self.param['bias'] = bias.split(' ')[0]
-        self.param['bu'] = bias.split(' ')[-1]
-        current = meta['Z controller Setpoint']
-        current, cu = current.split(' ')
-        self.param['current'] = float(current) * 1e12
-        self.param['cu'] = 'pA'
+        if meta.contains_by_name('Z controller Setpoint'):
+            current = meta['Z controller Setpoint']
+            current, cu = current.split(' ')
+            self.param['current'] = float(current) * 1e12
+            self.param['cu'] = 'pA'
+        if self.c.contains_by_name('/meta/eepa/Regulator.Setpoint_1'):
+            self.param['current'] = self.c['/meta/eepa/Regulator.Setpoint_1']*1e9
         current_bias = 'pm'
         self.param['width'] = self.d.get_xreal() * 1e9
         self.param['height'] = self.d.get_yreal() * 1e9
@@ -54,8 +64,15 @@ class GwyData():
         for i in range(0,count,2):
             title = '/' + str(i) + '/data/title'
             temp_title = self.c[title]
-            temp_channel, temp_directions = temp_title.split(' ')
-            temp_directions = temp_directions[1:-1]
+            if self.param['full_path'][-3:] == 'sxm':
+                temp_channel, temp_directions = temp_title.split(' ')
+                temp_directions = temp_directions[1:-1]
+            elif self.param['full_path'][-6:] =='Z_mtrx':
+                print temp_title, temp_title.strip().split(' ')
+                temp_channel = temp_title.strip().split(' ')[-1]
+                print temp_channel
+            else:
+                temp_channel = temp_title
             #print temp_directions, i
             channels.append(temp_channel)
         self.param['channels'] = channels
