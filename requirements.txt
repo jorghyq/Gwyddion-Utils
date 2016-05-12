@@ -1,1 +1,3 @@
-to be finished
+pygtk
+numpy
+matplotlib
