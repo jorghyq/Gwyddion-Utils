@@ -13,6 +13,10 @@ Currently, it can handle Nanonis .sxm file and Omicron .mtrx file.
 ### Use as independent GUI
 To use it independently, you need to have Gwyddion installed with pygwy.
 
+You need to be able to use the gwyddion outside Gwyddion software by `import gwy`.
+
+Then you can simply run the SPMBrowser.py in **GwyBrowser/gwybrowser**.
+
 ### Use within the Gwyddion
 To use it within the Gwyddion, you need to have Gwyddion installed with pygwy.
 
