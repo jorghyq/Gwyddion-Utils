@@ -1,7 +1,21 @@
 # Gwyddion-Utils
-This project provides a SPM data browser (like Nanonis Scan Inspector). It is based on Gwyddion, using the Gwyddion python API.
+This project is to provide a SPM data browser for fast image reviewing and saving (like Nanonis Scan Inspector). It is based on [Gwyddion](http://gwyddion.net/), using the Gwyddion python API.
+
 It can be used independently as GUI to browse SPM image data, or started as a
 function in Gwyddion.
+
 Its biggest advantage is the fast review of the SPM data and fast saving
 function.
+
 Currently, it can handle Nanonis .sxm file and Omicron .mtrx file.
+
+## Usage
+### Use as independent GUI
+To use it independently, you need to have Gwyddion installed with pygwy.
+
+### Use within the Gwyddion
+To use it within the Gwyddion, you need to have Gwyddion installed with pygwy.
+
+For the python part, you need pygtk, numpy, matplotlib and re.
+
+Put the pygwy, ui and icon folders inside the **GwyBrowser** to the ~/.gwyddion file.
