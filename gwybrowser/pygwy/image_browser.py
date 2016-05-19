@@ -6,7 +6,7 @@ import gtk
 import sys
 import os
 sys.path.insert(1,"/usr/local/lib64/python2.7/site-packages")
-sys.path.insert(1,"./src")
+sys.path.insert(1,"src/")
 import gwy
 import re
 import numpy as np
@@ -15,11 +15,6 @@ from Imager import Imager
 from Infor import Infor
 from Operator import Operator
 from GwyData import GwyData
-
-plugin_menu = "/Basic Operations/Image Browser"
-plugin_type = "PROCESS"
-plugin_desc = "image_browser"
-
 
 # Class for navigation
 class SPMBrowser():
@@ -65,8 +60,8 @@ class SPMBrowser():
             self.gwydata.load_data(self.current_data)
             self.info.initialize(widget,self.gwydata.param)
             #print self.gwydata.param['channels']
-            self.img_1.initialize(self.gwydata.get_container(),self.gwydata.get_param(),self.channel_img_1)
-            self.img_2.initialize(self.gwydata.get_container(),self.gwydata.get_param(),self.channel_img_2)
+            self.img_1.initialize(self.gwydata,self.channel_img_1)
+            self.img_2.initialize(self.gwydata,self.channel_img_2)
             self.oper.get_current_data(self.gwydata.get_container(),self.gwydata.get_param(),self.navi.get_path2save(),'Z')
 
     def record_channels(self,widget,data):
@@ -87,16 +82,10 @@ class SPMBrowser():
             if active >= 0:
                 self.navi.go_backward(widget,data)
 
-#def main():
-#    gtk.main()
-#    return 0
-#
-#if __name__ == "__main__":
-#    SPMBrowser()
-#    main()
-
-def run():
-    SPMBrowser()
+def main():
     gtk.main()
     return 0
 
+if __name__ == "__main__":
+    SPMBrowser()
+    main()

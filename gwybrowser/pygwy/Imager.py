@@ -8,6 +8,7 @@ import gwy
 import re
 from GwyData import GwyData
 from Navigator import Navigator
+from Operator import Operator
 
 # Class for image
 class Imager():
@@ -23,7 +24,9 @@ class Imager():
         self.process_str = None
         self.process_id = 0
         self.param = None
-        self.gradient_key = 'julio'
+        self.gradient_key = 'Gwyddion.net'
+        self.c = None
+        self.dest_dir = None
 
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
@@ -51,6 +54,7 @@ class Imager():
         self.label_scale_min = gtk.Label("Min: ")
         self.label_scale_max = gtk.Label("Max: ")
         self.button_open = gtk.Button("Open")
+        self.button_save = gtk.Button("Save")
         self.adjustment_scale_min = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 5.0, 1.0)
         self.adjustment_scale_max = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 5.0, 1.0)
         self.scale_min = gtk.HScale(self.adjustment_scale_min)
@@ -62,8 +66,10 @@ class Imager():
         self.scale_max.set_digits(0)
         self.hbox_scale_min.pack_start(self.label_scale_min,expand=False,fill=True,padding=0)
         self.hbox_scale_min.pack_start(self.scale_min,expand=True,fill=True,padding=0)
-        self.hbox_scale_min.pack_end(self.scale_max,expand=True,fill=True,padding=0)
-        self.hbox_scale_min.pack_end(self.label_scale_max,expand=False,fill=True,padding=0)
+        self.hbox_scale_min.pack_start(self.label_scale_max,expand=False,fill=True,padding=0)
+        self.hbox_scale_min.pack_start(self.scale_max,expand=True,fill=True,padding=0)
+        self.hbox_scale_min.pack_end(self.button_open,0,1,0)
+        self.hbox_scale_min.pack_end(self.button_save,0,1,0)
         self.hbox_main.pack_start(self.label_channels,0,1,0)
         self.hbox_main.pack_start(self.combobox_channels,0,1,0)
         self.hbox_main.pack_end(self.combobox_directions,0,1,0)
@@ -80,10 +86,13 @@ class Imager():
         self.combobox_directions.connect('changed',self.update_image,None)
         self.scale_min.connect('value_changed',self.update_image,None)
         self.scale_max.connect('value_changed',self.update_image,None)
+        self.button_open.connect('clicked',self.open_file,None)
+        self.button_save.connect('clicked',self.save2png,None)
 
-    def initialize(self,container,param,active_channel=None):
-        self.c = container
-        self.param = param
+    def initialize(self,gwydata,active_channel=None):
+        self.gwydata = gwydata
+        self.c = self.gwydata.get_container()
+        self.param = self.gwydata.get_param()
         self.d_origin = None
         self.channels = self.param['channels']
         #print self.channels
@@ -95,16 +104,22 @@ class Imager():
             self.combobox_channels.set_model(None)
             for item in self.channels:
                 model.append([item])
+                print item
             self.combobox_channels.set_model(model)
             if active_channel:
+                print self.channels,active_channel
                 if active_channel in self.channels:
                     #print self.channels, active_channel
                     active = self.channels.index(active_channel)
                     self.channel_id = active
                     self.channel_str = active_channel
+                else:
+                    self.channel_id = 0
+                    self.channel_str = self.channels[self.channel_id]
             else:
                 self.channel_id = 0
                 self.channel_str = self.channels[self.channel_id]
+            print self.channel_str,self.channel_id
             self.combobox_channels.set_active(self.channel_id)
             self.adjustment_scale_min.set_value(0)
             self.adjustment_scale_max.set_value(100)
@@ -125,10 +140,10 @@ class Imager():
     def get_active_process(self):
         model = self.combobox_processes.get_model()
         self.process_id = self.combobox_processes.get_active()
-        self.channel_str = model[self.process_id][0]
+        self.process_str = model[self.process_id][0]
         return self.process_id
 
-    def load_data(self):
+    def load_data(self ):
         self.channel_id = self.combobox_channels.get_active()
         model = self.combobox_channels.get_model()
         active = self.combobox_channels.get_active()
@@ -136,19 +151,24 @@ class Imager():
             self.channel_str = model[self.channel_id][0]
             #print self.channel_str
             self.direction_id = self.combobox_directions.get_active()
+            #if self.gwydata.param['full_path'][-6:]=='Z_mtrx':
+            #    data_id = self.channel_id
+            #else:
             data_id = self.channel_id * 2 + self.direction_id
             #print self.channel_id,self.direction_id, data_id
             self.data_id_str = '/'+str(data_id)+'/'
+            print data_id,self.data_id_str
             self.d_origin = self.c[self.data_id_str + 'data']
             #self.d = self.d_origin.duplicate()
             if self.d_origin:
                 self.c.set_object_by_name(self.data_id_str + 'data',self.d_origin)
             else:
                 self.d_origin = self.c[self.data_id_str + 'data']
-            gwy.gwy_app_data_browser_select_data_field(self.c,0)
+            gwy.gwy_app_data_browser_select_data_field(self.c,data_id)
             self.get_active_process()
+            print self.process_id
             if self.process_id == 1:
-                gwy.gwy_app_data_browser_select_data_field(self.c, 0)
+                gwy.gwy_app_data_browser_select_data_field(self.c, data_id)
                 gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
                 #gwy.gwy_process_func_run("level", self.c, gwy.RUN_INTERACTIVE)
             self.d = self.c[self.data_id_str + 'data']
@@ -196,8 +216,16 @@ class Imager():
         self.view.set_base_layer(layer)
         #self.combobox_files.grab_focus()
         gwy.gwy_app_data_browser_remove(self.c)
+        #print self.channel_str
 
+    def save2png(self,widget,data):
+        if self.gwydata:
+            print self.scale_min_current,self.scale_max_current
+            self.gwydata.save2png(self.channel_str,self.scale_min_current,self.scale_max_current)
 
+    def open_file(self,widget,data):
+        if self.current_data:
+            gwy.gwy_app_file_load(self.current_data)
 
 class TestBrowser():
     def __init__(self):
@@ -205,6 +233,7 @@ class TestBrowser():
         self.path_selected = None
         self.navi = Navigator(self.window)
         self.img = Imager(self.window,400)
+        #self.oper = Operator(self.window)
         self.gwydata = GwyData()
         self.channel_img = None
         # widget
@@ -213,17 +242,19 @@ class TestBrowser():
         self.vbox_main = gtk.VBox(False,0)
         self.vbox_main.pack_start(self.navi.vbox_main,0,1,0)
         self.vbox_main.pack_start(self.img.vbox_main,1,1,0)
+        #self.vbox_main.pack_start(self.oper.vbox_main,0,1,0)
         self.window.add(self.vbox_main)
         self.window.show_all()
         # Signal handling
         self.navi.combobox_files.connect('changed',self.update_all,None)
         self.img.combobox_channels.connect('changed',self.record_channel,None)
+        #self.navi.combobox_files.connect('changed',self.)
 
     def update_all(self,widget,data):
         self.current_data = self.navi.get_full_path()
         if self.current_data:
             self.gwydata.load_data(self.current_data)
-            self.img.initialize(self.gwydata.get_container(),self.gwydata.get_param(),self.channel_img)
+            self.img.initialize(self.gwydata,self.channel_img)
 
     def record_channel(self,widget,data):
         self.channel_img = self.img.get_active_channel()

@@ -21,10 +21,12 @@ class Operator():
         # Definition of the widget
         self.vbox_main = gtk.VBox(False,0)
         self.button_save = gtk.Button("Save")
+        self.button_save2 = gtk.Button("Save Sys")
         self.button_copy = gtk.Button("Copy")
         self.button_open = gtk.Button("Open")
         self.button_quit = gtk.Button("Quit")
         self.vbox_main.pack_start(self.button_save,0,1,0)
+        self.vbox_main.pack_start(self.button_save2,0,1,0)
         self.vbox_main.pack_start(self.button_copy,0,1,0)
         self.vbox_main.pack_start(self.button_open,0,1,0)
         self.vbox_main.pack_start(self.button_quit,0,1,0)
@@ -33,13 +35,17 @@ class Operator():
         self.button_open.connect('clicked', self.open_file, None)
         self.button_copy.connect('clicked',self.copy_file,None)
         self.button_save.connect('clicked',self.save_file,None)
+        self.button_save2.connect('clicked',self.save_file2,None)
         self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 
     def save_file(self,widget,data):
         #print self.dest_path, self.channel
         if self.c and self.channel:
-            save2png_text(self.c,self.param,self.dest_path,self.channel)
+            save2png_text(self.c,self.param,self.channel)
             #self.combobox_files.grab_focus()
+
+    def save_file2(self,widget,data):
+        file_name = self.param['full_path'] + '.png'
 
     def copy_file(self,widget,data):
         if self.c:

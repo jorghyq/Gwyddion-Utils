@@ -1,29 +1,55 @@
-import gwy
-import re
-import os
-import sys
+#!/usr/bin/env python
+# Image Browser for Gwyddion
+
 import pygtk
 pygtk.require('2.0')
 import gtk
-import matplotlib.pyplot as plt
-import matplotlib as mlp
+import sys
+sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
+import gwy
+import os
 import numpy as np
+import re
+import matplotlib
+matplotlib.use('GTK')
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
+#from matplotlib.backends.backend_gtk import FigureCanvasGTK as FigureCanvas
 from convert_sxm2png_text import save2png_text
-    
-plugin_menu = "/Basic Operations/Image Browser"
-plugin_type = "PROCESS"
-plugin_desc = "image_browser"
+#from matplotlib.backends.backend_gtkcairo import FigureCanvasGTKCairo as FigureCanvas
+
+# or NavigationToolbar for classic
+#from matplotlib.backends.backend_gtk import NavigationToolbar2GTK as NavigationToolbar
+from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as NavigationToolbar
+
+# implement the default mpl key bindings
+from matplotlib.backend_bases import key_press_handler
+
 
 def sorted_ls(path, files):
     mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
     return list(sorted(files, key=mtime))
+
+def rescale(array, high, low):
+    amin = array.min()
+    amax = array.max()
+    rng = amax - amin
+    if rng < 1e-10:
+	output = np.zeros(array.shape)
+    else:
+	output = high - (((high - low) * (amax - array)) / rng)
+	output = output.astype('uint8')
+    return output
 
 class ImageBrowser:
     def __init__(self):
 	########### Initialize some variables ##############
 	self.CHANNEL = None
 	self.DIRECTION = None
-	
+	# load cmap
+	self.fire = np.loadtxt('/home/jorghyq/.gwyddion/pygwy/fire.txt',delimiter=' ')
+	self.fire_cm = matplotlib.colors.ListedColormap(self.fire/255)
+	self.gradient_key = self.fire_cm
 	########### Initialize gui #########################
 	self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	self.window.connect("destroy", lambda w: gtk.main_quit())
@@ -39,17 +65,25 @@ class ImageBrowser:
 	self.hbox_files.pack_end(self.button_load,expand=False,fill=True,padding=0)
 	##################### hbox holding image
 	self.local_c = gwy.Container()
-	self.view = gwy.DataView(self.local_c)
+	self.fig = Figure(figsize=(5,4), tight_layout=True, dpi=100)
+	self.ax = self.fig.add_subplot(111)
+	self.ax.axis('off')
+	self.ax.set_xticks([])
+	self.ax.set_yticks([])
+	self.ax.imshow(np.array([[2,4,5,5],[5,6,7,8],[7,6,5,7]]))
+	self.canvas = FigureCanvas(self.fig)
+	self.canvas.set_size_request(600, 600)
+	#self.view = gwy.DataView(self.local_c)
 	#self.hbox_image = gtk.HBox(False, 0)
 	#self.hbox_image.set_size_request(400, 400)
-	self.view.set_size_request(400, 400)
+	#self.view.set_size_request(400, 400)
 	#self.hbox_image.set_usize(400, 400)
 	#self.hbox_image.pack_start(self.view,expand=True,fill=True,padding=0)
 	#self.hbox_image.set_bord(50)
 	# vbox holding labels and operations
 	self.vbox_ops = gtk.VBox(False,0)
 	#self.vbox_ops.set_border_width(50)
-	######################### elements for vbox_ops ####
+	######################### elements for vbox_ops
 	self.combobox_channels = gtk.combo_box_new_text()
 	self.combobox_directions = gtk.combo_box_new_text()
 	self.combobox_directions.append_text("Forward")
@@ -57,102 +91,104 @@ class ImageBrowser:
 	self.combobox_directions.set_active(0)
 	self.label_channels = gtk.Label("Channel: ")
 	self.label_directions = gtk.Label("Direction: ")
-	self.table_info = gtk.Table(6,2,True)
-	self.label_volt_pre = gtk.Label("V: ")
-	self.label_current_pre = gtk.Label("I: ")
-	self.label_w_pre = gtk.Label("W: ")
-	self.label_h_pre = gtk.Label("H: ")
-	self.label_volt = gtk.Label(None)
-	self.label_current = gtk.Label(None)
-	self.label_w = gtk.Label(None)
-	self.label_h = gtk.Label(None)
-	self.frame_volt = gtk.Frame()
-	self.frame_volt.add(self.label_volt_pre)
-	self.frame_current = gtk.Frame()
-	self.frame_current.add(self.label_current_pre)
-	self.frame_w = gtk.Frame()
-	self.frame_w.add(self.label_w_pre)
-	self.frame_h = gtk.Frame()
-	self.frame_h.add(self.label_h_pre)
+	self.label_volt = gtk.Label("V: ")
+	self.label_current = gtk.Label("I: ")
+	self.hbox_channels = gtk.HBox(False, 0)
+	self.hbox_directions = gtk.HBox(False, 0)
+	self.hbox_types = gtk.HBox(False, 0)
+	self.hbox_scale_min = gtk.HBox(False, 0)
+	self.hbox_scale_max = gtk.HBox(False, 0)
+	self.label_w = gtk.Label("W: ")
+	self.label_h = gtk.Label("H: ")
 	self.label_types =gtk.Label("Type: ")
 	self.combobox_types =gtk.combo_box_new_text()
+	self.label_scale_min = gtk.Label("Min: ")
+	self.label_scale_max = gtk.Label("Max: ")
 	types = ["Unknown","Metal","Molecules","Useless"]
 	for item in types:
 	    self.combobox_types.append_text(item)
 	    self.combobox_types.set_active(0)
-	self.table_info.attach(self.label_channels,0,1,0,1)
-	self.table_info.attach(self.combobox_channels,1,2,0,1)
-	self.table_info.attach(self.label_directions,0,1,1,2)
-	self.table_info.attach(self.combobox_directions,1,2,1,2)
-	self.table_info.attach(self.frame_volt,0,1,2,3)
-	self.table_info.attach(self.label_volt,1,2,2,3)
-	self.table_info.attach(self.frame_current,0,1,3,4)
-	self.table_info.attach(self.label_current,1,2,3,4)
-	self.table_info.attach(self.frame_w,0,1,4,5)
-	self.table_info.attach(self.label_w,1,2,4,5)
-	self.table_info.attach(self.frame_h,0,1,5,6)
-	self.table_info.attach(self.label_h,1,2,5,6)
-	self.table_info.attach(self.label_types,0,1,6,7)
-	self.table_info.attach(self.combobox_types,1,2,6,7)
-
-	self.hbox_scale_min = gtk.HBox(False, 0)
-	self.hbox_scale_max = gtk.HBox(False, 0)
-	self.label_scale_min = gtk.Label("Min: ")
-	self.label_scale_max = gtk.Label("Max: ")
 	self.button_open = gtk.Button("Open")
-	self.adjustment_scale_min = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 5.0, 1.0)
-	self.adjustment_scale_max = gtk.Adjustment(0.0, 0.0, 101.0, 1.0, 5.0, 1.0)
+	self.adjustment_scale_min = gtk.Adjustment(0.0, 0.0, 256.0, 1.0, 50.0, 2.0)
+	self.adjustment_scale_max = gtk.Adjustment(0.0, 0.0, 256.0, 1.0, 50.0, 2.0)
 	self.scale_min = gtk.HScale(self.adjustment_scale_min)
-	#self.scale_min.set_update_policy(gtk.UPDATE_CONTINUOUS)
+	self.scale_min.set_update_policy(gtk.UPDATE_CONTINUOUS)
 	self.scale_min.set_digits(0)
 	#self.scale_min.set_value_pos(gtk.POS_TOP)
 	self.scale_min.set_draw_value(True)
 	self.scale_max = gtk.HScale(self.adjustment_scale_max)
 	self.scale_max.set_digits(0)
-	#self.scale_max.set_update_policy(gtk.UPDATE_CONTINUOUS)
 	self.button_save = gtk.Button("Save")
-	self.button_quit = gtk.Button("Quit")
-	self.table_process = gtk.Table(2, 2,True)
-	self.togglebutton_level = gtk.ToggleButton("Level")
-	self.togglebutton_flevel = gtk.ToggleButton("F-Level")
-	self.togglebutton_cline = gtk.ToggleButton("C-Lines")
-	self.table_process.attach(self.togglebutton_level,0,1,0,1)
-	self.table_process.attach(self.togglebutton_flevel,1,2,0,1)
-	self.table_process.attach(self.togglebutton_cline,0,1,1,2)
+	self.scale_max.set_update_policy(gtk.UPDATE_CONTINUOUS)
+	self.hbox_channels.pack_start(self.label_channels,expand=False,fill=True,padding=0)
+	self.hbox_channels.pack_start(self.combobox_channels,expand=False,fill=True,padding=0)
+	self.hbox_directions.pack_start(self.label_directions,expand=False,fill=True,padding=0)
+	self.hbox_directions.pack_start(self.combobox_directions,expand=False,fill=True,padding=0)
+	self.hbox_types.pack_start(self.label_types,expand=False,fill=True,padding=0)
+	self.hbox_types.pack_start(self.combobox_types,expand=False,fill=True,padding=0)
 	self.hbox_scale_min.pack_start(self.label_scale_min,expand=False,fill=True,padding=0)
 	self.hbox_scale_min.pack_end(self.scale_min,expand=True,fill=True,padding=0)
 	self.hbox_scale_max.pack_start(self.label_scale_max,expand=False,fill=True,padding=0)
 	self.hbox_scale_max.pack_end(self.scale_max,expand=True,fill=True,padding=0)
-	self.vbox_ops.pack_start(self.table_info, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.hbox_channels, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.hbox_directions, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.label_volt, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.label_current, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.label_w, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.label_h, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.hbox_types, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.button_open, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_scale_min, expand=False,fill=True,padding=0)
 	self.vbox_ops.pack_start(self.hbox_scale_max, expand=False,fill=True,padding=0)
-	self.vbox_ops.pack_start(self.table_process, expand=False,fill=True,padding=0)
-	self.vbox_ops.pack_end(self.button_quit, expand=False,fill=True,padding=0)
-	self.vbox_ops.pack_end(self.button_save, expand=False,fill=True,padding=0)
-	self.vbox_ops.pack_end(self.button_open, expand=False,fill=True,padding=0)
+	self.vbox_ops.pack_start(self.button_save, expand=False,fill=True,padding=0)
+	#self.combobox_channels.show()
+	#self.combobox_directions.show()
+	#self.combobox_types.show()
+	#self.label_channels.show()
+	#self.label_directions.show()
+	#self.label_types.show()
+	#self.hbox_channels.show()
+	#self.hbox_directions.show()
+	#self.hbox_types.show()
+	#self.label_volt.show()
+	#self.label_current.show()
+	#self.label_w.show()
+	#self.label_h.show()
+	#self.button_open.show()
+	#self.scale_min.show()
+	#self.scale_max.show()
+	#self.label_scale_min.show()
+	#self.label_scale_max.show()
+	#self.hbox_scale_min.show()
+	#self.hbox_scale_max.show()
 	################################ handling signals
 	self.button_load.connect("clicked",self.select_path,None)
 	self.combobox_files.connect('changed', self.update_all, None)
 	self.combobox_channels.connect('changed', self.update_image, None)
 	self.combobox_directions.connect('changed', self.update_image, None)
 	self.button_open.connect('clicked', self.open_file, None)
-	self.scale_min.connect('value_changed',self.update_image,None)
-	self.scale_max.connect('value_changed',self.update_image,None)
+	self.scale_min.connect('value_changed',self.update_view,self.gradient_key)
+	self.scale_max.connect('value_changed',self.update_view,self.gradient_key)
 	self.button_save.connect('clicked',self.save_file,None)
-	self.togglebutton_level.connect('toggled',self.update_image,None)
-	self.button_quit.connect('clicked',lambda w: gtk.main_quit())
 	################################ Arrangement and show
 	self.window.add(self.vbox_main)
 	self.vbox_main.pack_start(self.hbox_files,expand=False,fill=True,padding=0)
 	self.vbox_main.pack_start(self.hbox_main,expand=False,fill=True,padding=0)
-	self.hbox_main.pack_start(self.view,expand=True,fill=True,padding=0)
+	self.hbox_main.pack_start(self.canvas,expand=True,fill=True,padding=0)
 	self.hbox_main.pack_end(self.vbox_ops,expand=True,fill=True,padding=0)
+	#self.canvas.show()
+	#self.vbox_ops.show()
+	#self.combobox_files.show()
+	#self.button_load.show()
+	#self.hbox_files.show()
+	#self.hbox_main.show()
+	#self.vbox_main.show()
 	self.window.show_all()
-	
-	
+
+
     def select_path(self, widget, data):
 	# load image
-	dialog = gtk.FileChooserDialog("Open..", self.window, 
+	dialog = gtk.FileChooserDialog("Open..", self.window,
 	gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 	gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 	dialog.set_default_response(gtk.RESPONSE_OK)
@@ -166,16 +202,16 @@ class ImageBrowser:
 	    #print 'Closed, no files selected'
 	    pass
 	dialog.destroy()
-    
+
     def update_files(self):
 	files = [f for f in os.listdir(self.select_path) if os.path.isfile(self.select_path +'/'+ f) and f[-3:] == 'sxm']
 	model = self.combobox_files.get_model()
 	if model:
-	    model.clear()   
+	    model.clear()
 	if len(files) > 0:
 	    model = self.combobox_files.get_model()
 	    self.combobox_files.set_model(None)
-	    files_sorted = sorted_ls(self.select_path, files) 
+	    files_sorted = sorted_ls(self.select_path, files)
 	    for item in files_sorted:
 		#print item
 		model.append([item])
@@ -183,7 +219,7 @@ class ImageBrowser:
 	    self.combobox_files.set_model(model)
 	    self.combobox_files.set_active(0)
 	    self.combobox_files.grab_focus()
-    
+
     def update_all(self,widget,data):
 	active = self.combobox_files.get_active()
 	model = self.combobox_files.get_model()
@@ -193,11 +229,11 @@ class ImageBrowser:
 	    #print  active
 	    self.current_data = self.select_path +'/'+ model[active][0]
 	    # change the image and change the image settings
-	    self.load_new_data()
-	    self.label_volt.set_text(self.bias +' '+ self.bu)
-	    self.label_current.set_text(str(self.current) +' '+ self.cu)
-	    self.label_w.set_text(str(self.xd) +' '+ self.xyu)
-	    self.label_h.set_text(str(self.yd) +' '+ self.xyu)
+	    self.load_new_data(self.current_data)
+	    self.label_volt.set_text("V: "+ self.bias +' '+ self.bu)
+	    self.label_current.set_text("I: "+ str(self.current) +' '+ self.cu)
+	    self.label_w.set_text("W: "+ str(self.xd) +' '+ self.xyu)
+	    self.label_h.set_text("H: "+ str(self.yd) +' '+ self.xyu)
 	    model = self.combobox_channels.get_model()
 	    self.combobox_channels.set_model(None)
 	    model.clear()
@@ -208,49 +244,29 @@ class ImageBrowser:
 	    self.combobox_channels.set_active(self.channel_id)
 	    self.update_image(widget,None)
 	    self.adjustment_scale_min.set_value(0)
-	    self.adjustment_scale_max.set_value(100)
-	    #self.update_image(widget,None)
+	    self.adjustment_scale_max.set_value(256)
 	    # change the combobox_channels
-	    
+
     def update_image(self, widget, data):
-	#print "update"
-	gwy.gwy_app_data_browser_add(self.c)
-	#self.load_new_data()
 	self.load_data()
-	self.d.data_changed()
-	#print "update", self.togglebutton_level.get_active()
-	self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
+	self.gradient_key = self.fire_cm
+	#self.local_c.set_object_by_name(self.data_id_str+"data", self.d)
 	if re.search(r'Z', self.channel_str):
 	    #print self.channel_str
-	    self.gradient_key = 'Julio'	    
+	    self.gradient_key = self.fire_cm
 	elif re.search(r'Frequency', self.channel_str):
-	    self.gradient_key = 'Gray'
-	self.local_c.set_string_by_name(self.data_id_str+"base/palette", self.gradient_key)
-	self.local_c.set_int32_by_name(self.data_id_str+"base/range-type", 1)#gwy.LAYER_BASIC_RANGE_FIXED
-	self.local_c.set_double_by_name(self.data_id_str+"base/min", float(self.data_min + self.scale_min_current/100*self.data_dif))
-	self.local_c.set_double_by_name(self.data_id_str+"base/max", float(self.data_min + self.scale_max_current/100*self.data_dif))
-	self.local_c[self.data_id_str+"data"].data_changed()
-	#print self.local_c[self.data_id_str+"base/min"],self.data_id_str+"base/min"
-	#print self.data_min + self.scale_min_current/100*self.data_dif,self.data_min + self.scale_max_current/100*self.data_dif
-	layer = gwy.LayerBasic()
-	layer.set_data_key(self.data_id_str+"data")
-	layer.set_gradient_key(self.data_id_str+"base/palette")
-	layer.set_range_type_key(self.data_id_str+"base")
-	layer.set_min_max_key(self.data_id_str+"base")
-	self.view.set_data_prefix(self.data_id_str+"data")
-	self.view.set_base_layer(layer)
-	self.combobox_files.grab_focus()
-	gwy.gwy_app_data_browser_remove(self.c)
-		    
-	    
-    def load_new_data(self):
-	self.d_origin = None
-	#gwy.gwy_app_data_browser_remove(self.c)
-	self.c = gwy.gwy_file_load(self.current_data, gwy.RUN_NONINTERACTIVE)
+	    self.gradient_key = 'gray'
+	self.update_view(widget,self.gradient_key)
+
+
+    def load_new_data(self, data_path):
+	self.c = gwy.gwy_file_load(data_path, gwy.RUN_NONINTERACTIVE)
 	data_field_id = 0
 	data_field = '/' + str(data_field_id) + '/data'
 	self.d = self.c[data_field]
 	meta_field = '/' + str(data_field_id) + '/meta'
+	#title = '/' + str(data_field_id) + '/data/title'
+	#self.channel = self.c[title]
 	meta = self.c[meta_field]
 	bias = meta['Bias']
 	self.bias, self.bu = bias.split(' ')
@@ -262,6 +278,8 @@ class ImageBrowser:
 	self.xd = self.d.get_xreal() * 1e9
 	self.yd = self.d.get_yreal() * 1e9
 	self.xyu = 'nm'
+	self.w = self.d.get_xres()
+	self.h = self.d.get_yres()
 	# Setting the channels
 	c_keys = self.c.keys_by_name()
 	count = 0
@@ -281,8 +299,7 @@ class ImageBrowser:
 	    temp_directions = temp_directions[1:-1]
 	    #print temp_directions, i
 	    self.channels.append(temp_channel)
-	#gwy.gwy_app_data_browser_remove(self.c)
-    
+
     def load_data(self):
 	self.channel_id = self.combobox_channels.get_active()
 	model = self.combobox_channels.get_model()
@@ -292,44 +309,36 @@ class ImageBrowser:
 	data_id = self.channel_id * 2 + self.direction_id
 	#print self.channel_id,self.direction_id, data_id
 	self.data_id_str = '/'+str(data_id)+'/'
-	self.d_origin = self.c[self.data_id_str + 'data']
-	#self.d = self.d_origin.duplicate()
-	if self.d_origin:
-	    self.c.set_object_by_name(self.data_id_str + 'data',self.d_origin)
-	else:
-	    self.d_origin = self.c[self.data_id_str + 'data']
-	if self.togglebutton_level.get_active():
-	    gwy.gwy_app_data_browser_select_data_field(self.c, 0)
-	    gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
 	self.d = self.c[self.data_id_str + 'data']
-	d_process = self.d.duplicate()
-	self.data_min = self.d.get_min()
-	self.data_max = self.d.get_max()
-	self. data_dif = self.data_max - self.data_min
+	array = np.array(self.d.get_data())
+	data_temp = rescale(array,255,0)
+	self.data = data_temp.reshape(self.w,self.h)
+
+    def update_view(self, widget, cm):
 	self.scale_min_current = self.scale_min.get_value()
 	self.scale_max_current = self.scale_max.get_value()
-	bottom = self.data_min + self.scale_min_current/100*self.data_dif
-	top = self.data_min + self.scale_max_current/100*self.data_dif
-	d_process.clamp(bottom, top)
-	#self.d.clamp(bottom, top)
-	self.d = d_process
-    
+	self.ax.imshow(self.data,cmap=cm,vmin = self.scale_min_current, vmax = self.scale_max_current)
+
+
+	self.canvas.draw()
+	#print 'update view'
+
     def save_file(self,widget,data):
-	save2png_text(self.current_data,self.d,'temp')
+	#save2png_text(self.current_data)
+	save_name = self.select_path + '/temp/' + os.path.basename(self.current_data)[:-3]+'png'
+	print save_name
+	self.fig.savefig(save_name,cmap=self.gradient_key,bbox_inches='tight', pad_inches=0,dpi=100)
 	self.combobox_files.grab_focus()
-		
+
     def open_file(self,widget,data):
 	gwy.gwy_app_file_load(self.current_data)
-	
-def run():
-    ImageBrowser()
+
+
+
+def main():
     gtk.main()
-    return 0	
-	
-#def main():
-#    gtk.main()
-#    return 0
-	
-#if __name__ == "__main__":
-#    ImageBrowser()
-#    main()
+    return 0
+
+if __name__ == "__main__":
+    ImageBrowser()
+    main()

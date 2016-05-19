@@ -83,7 +83,8 @@ class Navigator():
         dialog.destroy()
 
     def update_files(self):
-        self.files = [f for f in os.listdir(self.path_selected) if os.path.isfile(self.path_selected +'/'+ f) and f[-3:] == 'sxm']
+        self.files = [f for f in os.listdir(self.path_selected) if \
+                      os.path.isfile(self.path_selected +'/'+ f) and (f[-3:] == 'sxm' or f[-6:] == 'Z_mtrx')]
         model = self.combobox_files.get_model()
         if model:
             model.clear()
