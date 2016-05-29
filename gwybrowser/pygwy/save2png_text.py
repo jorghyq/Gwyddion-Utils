@@ -69,7 +69,7 @@ if match_c:
     ch_out = 'current'
 if match_z:
     ch_out = 'z'
-    
+
 if match_forward:
     fb_ward = 'F'
 if match_backward:
@@ -89,4 +89,4 @@ if not os.path.isdir(output_path):
 output = os.path.join(output_path,output_name)
 print output
 img.save(output)
-#io.imsave(basename+'test_16bit.png', np.transpose(-array2)) 
+#io.imsave(basename+'test_16bit.png', np.transpose(-array2))

@@ -13,8 +13,9 @@ ROOT = '/home/jorghyq/AFM_data/201506/'
 files = [f for f in os.listdir(ROOT) if os.path.isfile(ROOT + f) and f[-3:] == 'sxm']
 #print files, len(files)
 
-for data in files:
-    data_path = ROOT + data
-    save2png_text(data_path)
-    print data_path,'is done'
-    
+if __name__ == '__main__':
+    for data in files:
+        data_path = ROOT + data
+        save2png_text(data_path)
+        print data_path,'is done'
+

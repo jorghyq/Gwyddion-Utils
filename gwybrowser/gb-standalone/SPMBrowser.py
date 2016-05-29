@@ -16,6 +16,8 @@ from Infor import Infor
 from Operator import Operator
 from GwyData import GwyData
 
+# Insert pre-module part
+
 # Class for navigation
 class SPMBrowser():
     def __init__(self):
@@ -85,6 +87,9 @@ class SPMBrowser():
 def main():
     gtk.main()
     return 0
+
+# Insert post-module part
+
 
 if __name__ == "__main__":
     SPMBrowser()

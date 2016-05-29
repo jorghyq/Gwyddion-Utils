@@ -16,6 +16,14 @@ from Infor import Infor
 from Operator import Operator
 from GwyData import GwyData
 
+# This file used to save the text used as in gwyddion module
+# part before the code
+plugin_menu = "/Basic Operations/Image Browser"
+plugin_type = "PROCESS"
+plugin_desc = "image_browser"
+
+# Insert pre-module part
+
 # Class for navigation
 class SPMBrowser():
     def __init__(self):
@@ -85,6 +93,15 @@ class SPMBrowser():
 def main():
     gtk.main()
     return 0
+
+# part after the code
+def run():
+    SPMBrowser()
+    gtk.main()
+    return 0
+
+# Insert post-module part
+
 
 if __name__ == "__main__":
     SPMBrowser()

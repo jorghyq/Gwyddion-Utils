@@ -10,7 +10,7 @@ import numpy as np
 
 # format float to string
 def ffs(input_float):
-    if type(input_float) == 'str':
+    if isinstance(input_float, str):
         return input_float
     else:
         return "{0:.1f}".format(input_float)
