@@ -43,7 +43,7 @@ with open(local_dst+'temp.txt','w') as f:
         f.write(line)
 
 os.remove(local_dst+'image_browser.py')
-shutil.move(local_dst+'temp.txt',local_dst+'image_broswer.py')
+shutil.move(local_dst+'temp.txt',local_dst+'image_browser.py')
 
 # clean the .gwyddion directory
 
