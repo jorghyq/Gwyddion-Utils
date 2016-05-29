@@ -12,6 +12,9 @@ dst = '/home/jorghyq/.gwyddion/pygwy'
 
 # convert the standalone program into module format
 # copy the files from standalone directory to local pygwy directory
+if os.path.isdir(local_dst):
+    shutil.rmtree(local_dst)
+    os.mkdir(local_dst)
 for item in os.listdir(local_src):
     if item[-3:] == '.py':
         shutil.copy2(local_src+item, local_dst)
@@ -48,6 +51,10 @@ shutil.move(local_dst+'temp.txt',local_dst+'image_browser.py')
 # clean the .gwyddion directory
 
 # copy the relavent files into .gwyddion directory
+if os.path.isdir(dst):
+    shutil.rmtree(dst)
+    os.mkdir(dst)
+
 for item in os.listdir(local_dst):
     if item[-3:] == '.py':
         shutil.copy2(local_dst+item, dst)
