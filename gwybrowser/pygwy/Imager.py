@@ -170,7 +170,7 @@ class Imager():
             if self.process_id == 1:
                 gwy.gwy_app_data_browser_select_data_field(self.c, data_id)
                 gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
-                #gwy.gwy_process_func_run("level", self.c, gwy.RUN_INTERACTIVE)
+                gwy.gwy_process_func_run("align_rows", self.c, gwy.RUN_IMMEDIATE)
             self.d = self.c[self.data_id_str + 'data']
             d_process = self.d.duplicate()
             self.data_min = self.d.get_min()
