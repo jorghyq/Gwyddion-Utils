@@ -53,6 +53,7 @@ class SPMBrowser():
         self.navi.combobox_files.connect('changed',self.update_all,None)
         self.img_1.combobox_channels.connect('changed',self.record_channels,None)
         self.img_2.combobox_channels.connect('changed',self.record_channels,None)
+        #self.info.entry_ratio.connect('changed',self.update_info,None)
         self.window.connect('key_press_event',self._key_press_event)
 
     def update_all(self,widget,data):
@@ -70,6 +71,9 @@ class SPMBrowser():
         self.channel_img_2 = self.img_2.get_active_channel()
         self.oper.get_current_data(self.gwydata.get_container(),self.gwydata.get_param(),self.navi.path2save,'Z')
         #print self.navi.path2save
+
+    def update_info(self,widget,data):
+        self.info.update()
 
     def _key_press_event(self,widget,data):
         keyval = data.keyval

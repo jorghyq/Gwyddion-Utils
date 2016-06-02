@@ -9,6 +9,7 @@ import re
 from GwyData import GwyData
 from Navigator import Navigator
 from Operator import Operator
+from convert_sxm2png_text import save2png_text
 
 # Class for image
 class Imager():
@@ -221,7 +222,7 @@ class Imager():
     def save2png(self,widget,data):
         if self.gwydata:
             print self.scale_min_current,self.scale_max_current
-            self.gwydata.save2png(self.channel_str,self.scale_min_current,self.scale_max_current)
+            save2png_text(self.c,self.param,self.channel_id)
 
     def open_file(self,widget,data):
         if self.current_data:
