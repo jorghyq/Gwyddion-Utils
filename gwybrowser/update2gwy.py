@@ -7,7 +7,7 @@ import re
 
 local_src = 'gb-standalone/'
 local_dst = 'pygwy/'
-dst = '/home/jorghyq/.gwyddion/pygwy'
+dst = '/home/jorghyq/.gwyddion/pygwy/'
 
 
 # convert the standalone program into module format
@@ -19,7 +19,7 @@ for item in os.listdir(local_src):
     if item[-3:] == '.py':
         shutil.copy2(local_src+item, local_dst)
         print item, 'copied to', local_dst
-
+shutil.copy2(local_src+'fire.txt',local_dst)
 # prepare the files for gwyddion module
 shutil.move(local_dst+'SPMBrowser.py', local_dst+'image_browser.py')
 with open(local_dst+'image_browser.py','r') as f:
@@ -59,4 +59,4 @@ for item in os.listdir(local_dst):
     if item[-3:] == '.py':
         shutil.copy2(local_dst+item, dst)
         print item, 'copied to', dst
-
+shutil.copy2(local_dst+'fire.txt',dst)

@@ -19,10 +19,14 @@ def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir
     c = container
     param = param
     channels = param['channels']
-    if channel in channels:
-        data_field_id = channels.index(channel)*2
+    if isinstance(channel,str):
+        if channel in channels:
+            data_field_id = channels.index(channel)*2
+        else:
+            data_field_id = 0
     else:
-        data_field_id = 0
+        data_field_id = channel*2
+        channel = param['channels'][channel]
     data_field = '/' + str(data_field_id) + '/data'
     d = c[data_field]
     dir_path,basename = os.path.split(param['full_path'])
@@ -31,8 +35,8 @@ def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir
     bu = param['bu']
     current = param['current']
     cu = param['cu']
-    xd = param['width']
-    yd = param['height']
+    xd = param['width_real']
+    yd = param['height_real']
     xyu = param['xyu']
     w = param['w_dim']
     h = param['h_dim']
@@ -114,7 +118,10 @@ def save2png_text(container,param, channel='Z',cm_low=None,cm_high=None,dest_dir
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
     count = 1
-    output_name = basename[:-4] + '_'+ch_out+'_'+ str(count) + '.png'
+    if ch_out:
+        output_name = basename[:-4] + '_'+ch_out+'_'+ str(count) + '.png'
+    else:
+        output_name = basename[:-4] + '_'+str(count) + '.png'
     #while os.path.exists(os.path.join(output_path,output_name)):
     #    count = count + 1
     #    output_name = basename + '_'+ch_out+'_'+ fb_ward+ '_' + str(count) + '.png'
