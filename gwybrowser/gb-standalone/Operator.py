@@ -49,11 +49,13 @@ class Operator():
 
     def copy_file(self,widget,data):
         if self.c:
+            #self.save_file()
             if self.dest_path:
                 shutil.copy(self.param['full_path'],self.dest_path+os.path.basename(self.param['full_path']))
+                print self.param['full_path'],'copied to',self.dest_path+os.path.basename(self.param['full_path'])
             else:
                 shutil.copy(self.param['full_path'],os.path.dirname(self.param['full_path'])+'/temp/'+os.path.basename(self.param['full_path']))
-
+                print self.param['full_path'],'copied to',os.path.dirname(self.param['full_path'])+'/temp/'+os.path.basename(self.param['full_path'])
 
     def open_file(self,widget,data):
         if self.current_data:

@@ -44,6 +44,8 @@ class Imager():
         self.combobox_processes = gtk.combo_box_new_text()
         self.combobox_processes.append_text("None")
         self.combobox_processes.append_text("P-level")
+        self.combobox_processes.append_text("L-align")
+        self.combobox_processes.append_text("P+L")
         self.combobox_processes.set_active(0)
         self.label_channels = gtk.Label("<b>Channel: </b>")
         self.label_channels.set_use_markup(True)
@@ -85,6 +87,7 @@ class Imager():
         # Signal handling
         self.combobox_channels.connect('changed',self.update_image,None)
         self.combobox_directions.connect('changed',self.update_image,None)
+        self.combobox_processes.connect('changed',self.update_image,None)
         self.scale_min.connect('value_changed',self.update_image,None)
         self.scale_max.connect('value_changed',self.update_image,None)
         self.button_open.connect('clicked',self.open_file,None)
@@ -171,6 +174,10 @@ class Imager():
             if self.process_id == 1:
                 gwy.gwy_app_data_browser_select_data_field(self.c, data_id)
                 gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
+            elif self.process_id == 2:
+                gwy.gwy_process_func_run("align_rows", self.c, gwy.RUN_IMMEDIATE)
+            elif self.process_id == 3:
+                gwy.gwy_process_func_run("level", self.c, gwy.RUN_IMMEDIATE)
                 gwy.gwy_process_func_run("align_rows", self.c, gwy.RUN_IMMEDIATE)
             self.d = self.c[self.data_id_str + 'data']
             d_process = self.d.duplicate()
@@ -191,6 +198,7 @@ class Imager():
 
     def update_image(self,widget,data):
         #pass
+        #self.channel_id = self.combobox_channels.get_active()
         gwy.gwy_app_data_browser_add(self.c)
         self.load_data()
         self.d.data_changed()
