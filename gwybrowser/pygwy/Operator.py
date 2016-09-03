@@ -58,9 +58,9 @@ class Operator():
                 print self.param['full_path'],'copied to',os.path.dirname(self.param['full_path'])+'/temp/'+os.path.basename(self.param['full_path'])
 
     def open_file(self,widget,data):
-        if self.current_data:
+        if self.param['full_path']:
             #self.current_data = data
-            gwy.gwy_app_file_load(self.current_data)
+            gwy.gwy_app_file_load(self.param['full_path'])
 
     def get_current_data(self,container,param,dest_path,channel):
         #print dest_path,channel

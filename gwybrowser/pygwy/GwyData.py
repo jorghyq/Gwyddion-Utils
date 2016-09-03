@@ -26,32 +26,43 @@ class GwyData():
         self.param['cu'] = 'nA'
         self.param['im_1_channel'] = 0
         self.param['im_2_channel'] = 0
+        # for post-calibration
         self.param['ratio'] = 1
 
     def load_data(self,data_path):
         self.current_data = data_path
+        self.param['full_path'] = self.current_data
         self.c = gwy.gwy_file_load(self.current_data,gwy.RUN_NONINTERACTIVE)
         data_field_id = 0
         data_field = '/' + str(data_field_id) + '/data'
         self.d = self.c[data_field]
         meta_field = '/' + str(data_field_id) + '/meta'
         meta = self.c[meta_field]
+        # Extract bias and current, if needed
+        ################ For Nanonis sxm file ################
         if meta.contains_by_name('Bias'):
             bias = meta['Bias']
             self.param['bias'] = bias.split(' ')[0]
             self.param['bu'] = bias.split(' ')[-1]
-        #print bias
-        if self.c.contains_by_name('/meta/eepa/GapVoltageControl.Voltage'):
-            self.param['bias'] = self.c['/meta/eepa/GapVoltageControl.Voltage']
-        self.param['full_path'] = self.current_data
         if meta.contains_by_name('Z controller Setpoint'):
             current = meta['Z controller Setpoint']
             current, cu = current.split(' ')
             self.param['current'] = float(current) * 1e12
             self.param['cu'] = 'pA'
+        ################ For Createc file ##################
+        if meta.contains_by_name('Biasvolt[mV]'):
+            self.param['bias'] = meta['Biasvolt[mV]']
+            self.param['bu'] = 'mV'
+        if meta.contains_by_name('Current[A]'):
+            self.param['current'] = float(meta['Current[A]']) * 1e12
+            self.param['cu'] = 'pA'
+        ############### For Omicron file ###################
+        if self.c.contains_by_name('/meta/eepa/GapVoltageControl.Voltage'):
+            self.param['bias'] = self.c['/meta/eepa/GapVoltageControl.Voltage']
         if self.c.contains_by_name('/meta/eepa/Regulator.Setpoint_1'):
             self.param['current'] = self.c['/meta/eepa/Regulator.Setpoint_1']*1e9
-        current_bias = 'pm'
+        #current_bias = 'pm'
+        ##### IF WANT TO SUPPORT MORE FORMATS, ADD PROCESSING CODE HERE #####
         self.param['width'] = self.d.get_xreal() * 1e9
         self.param['height'] = self.d.get_yreal() * 1e9
         self.param['width_real'] = self.param['width'] * self.param['ratio']
@@ -66,7 +77,7 @@ class GwyData():
         for item in c_keys:
             if re.search(r'title',item):
                 count = count + 1
-        #print count
+        print count
         for i in range(0,count,2):
             title = '/' + str(i) + '/data/title'
             temp_title = self.c[title]
@@ -95,5 +106,5 @@ class GwyData():
 
 if __name__ == "__main__":
     gwydata =GwyData()
-    gwydata.load_data('/home/jorghyq/Project/Gwyddion-Utils/test/A151117.155350-00742.sxm')
+    gwydata.load_data('/home/jorghyq/Project/Gwyddion-Utils/test/F160730.003926.R.dat')
     print gwydata.param['channels']

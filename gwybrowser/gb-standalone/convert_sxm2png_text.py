@@ -2,12 +2,11 @@ import re
 import os
 import sys
 sys.path.insert(1,'/usr/local/lib64/python2.7/site-packages')
-import matplotlib.pyplot as plt
 import gwy
 from GwyData import GwyData
 import matplotlib as mlp
 import numpy as np
-
+import matplotlib.pyplot as plt
 # format float to string
 def ffs(input_float):
     if isinstance(input_float, str):
